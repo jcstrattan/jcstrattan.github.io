@@ -6,17 +6,18 @@
   <title>Casey Strattan Engineering Portfolio</title>
   <style>
     body {
-      font-family: Arial, Helvetica, sans-serif;
+      font-family: Arial, sans-serif;
       line-height: 1.6;
-      max-width: 950px;
+      max-width: 1000px;
       margin: 0 auto;
-      padding: 40px 24px;
-      color: #111;
+      padding: 40px 20px;
+      color: #222;
       background: #fff;
     }
 
     h1, h2, h3, h4 {
       line-height: 1.25;
+      margin-top: 1.8em;
     }
 
     h1 {
@@ -29,21 +30,20 @@
       margin: 0.2em 0;
     }
 
+    a {
+      color: #0645ad;
+    }
+
     .toc {
-      margin: 40px 0;
-      padding: 20px;
       border: 1px solid #ddd;
-      background: #fafafa;
+      padding: 20px;
+      margin: 40px 0;
+      background: #f8f8f8;
     }
 
-    .toc a, a {
-      color: blue;
-      text-decoration: underline;
-      text-decoration-thickness: 1px;
-    }
-
-    section {
-      margin-top: 48px;
+    .toc ul {
+      margin: 0;
+      padding-left: 24px;
     }
 
     figure {
@@ -51,27 +51,28 @@
       text-align: center;
     }
 
-    img {
+    figure img {
       max-width: 100%;
       height: auto;
+      border: 1px solid #ddd;
     }
 
     figcaption {
       margin-top: 8px;
-      font-size: 0.95rem;
-      color: #333;
+      font-size: 0.95em;
+      color: #555;
     }
 
     .image-row {
       display: flex;
-      gap: 24px;
+      gap: 20px;
       justify-content: center;
       align-items: flex-start;
       flex-wrap: wrap;
     }
 
     .image-row img {
-      flex: 1 1 250px;
+      flex: 1 1 280px;
       max-width: 45%;
     }
 
@@ -97,30 +98,20 @@
       border-bottom: 1px solid #ddd;
     }
 
-    thead th {
-      border-top: 2px solid #111;
-      border-bottom: 2px solid #111;
+    th {
+      border-bottom: 2px solid #333;
     }
 
-    .group-row td {
-      font-style: italic;
-      border-top: 1px solid #111;
-      background: #f7f7f7;
+    .section-break {
+      border: 0;
+      border-top: 1px solid #ddd;
+      margin: 48px 0;
     }
 
-    .page-break {
-      break-before: page;
-      margin-top: 64px;
-    }
-
-    @media print {
-      body {
-        max-width: none;
-        padding: 0.75in;
-      }
-
-      .page-break {
-        break-before: page;
+    @media (max-width: 700px) {
+      .image-row img,
+      .image-row.three img {
+        max-width: 100%;
       }
     }
   </style>
@@ -134,228 +125,243 @@
 
   <nav class="toc">
     <h2>Table of Contents</h2>
-    <ol>
-      <li><a href="#grp">Propulsion Lead - Gaucho Rocket Project (GRP)</a></li>
-      <li><a href="#altaris">Assembly and Launch Operations of Altaris - Gaucho Rocket Project</a></li>
+    <ul>
+      <li><a href="#grp-halo">Propulsion Lead - Gaucho Rocket Project</a></li>
+      <li><a href="#halo-propulsion">Halo Propulsion</a></li>
+      <li><a href="#system-architecture">System Architecture</a></li>
+      <li><a href="#component-design">Component Design</a></li>
+      <li><a href="#altaris">Assembly and Launch Operations of Altaris</a></li>
       <li><a href="#course-work">Course Work</a></li>
-    </ol>
+    </ul>
   </nav>
 
-  <section id="grp">
-    <h2>Propulsion Lead - Gaucho Rocket Project (GRP)</h2>
-    <p><strong>Skills developed:</strong> fluid and thermal sciences, mechanical, fluid, and thermal analysis, CAD, part selection, leadership, and organization.</p>
+  <main>
+    <section id="grp-halo">
+      <h2>Propulsion Lead - Gaucho Rocket Project</h2>
+      <p><strong>Skills developed:</strong> fluid and thermal sciences, mechanical, fluid, and thermal analysis, CAD, part selection, leadership, and organization.</p>
 
-    <h3>Halo</h3>
-    <figure>
-      <img src="Halo Progresson.png" alt="Progression of Halo's propulsion system over time" />
-      <figcaption>Progression of Halo's propulsion system over time, from left to right.</figcaption>
-    </figure>
+      <h3>Halo</h3>
+      <figure>
+        <img src="Halo Progresson.png" alt="Progression of Halo's propulsion system over time" />
+        <figcaption>Progression of Halo's propulsion system over time, from left to right.</figcaption>
+      </figure>
 
-    <p><strong>Goal:</strong> Our most ambitious project, "Halo", is a VTVL liquid propellant rocket. If launched successfully, we will be the second collegiate team in the world to do this; the first being a Swiss group, <a href="https://gruyerespaceprogram.ch/">Gruyere Space</a>. Halo is also GRP's entry in the Collegiate <a href="https://landerchallenge.space/">Propulsive Lander Challenge</a>. Our team is separated into four sub-teams: mechanical design, electronics hardware, software, and propulsion.</p>
+      <p><strong>Goal:</strong> Our most ambitious project, “Halo,” is a VTVL liquid propellant rocket. If launched successfully, we will be the second collegiate team in the world to do this; the first being a Swiss group, <a href="https://gruyerespaceprogram.ch/">Gruyere Space</a>. Halo is also GRP's entry in the Collegiate <a href="https://landerchallenge.space/">Propulsive Lander Challenge</a>. Our team is separated into four sub-teams: mechanical design, electronics hardware, software, and propulsion.</p>
 
-    <table>
-      <caption>Summary Of Halo Targets</caption>
-      <thead>
-        <tr>
-          <th>Target</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Max. Thrust</td><td>3 kN</td></tr>
-        <tr><td>Max. Chamber Pressure</td><td>400 psi</td></tr>
-        <tr><td>Oxidizer, Fuel</td><td>Nitrous Oxide, Ethanol</td></tr>
-        <tr><td>Mass Ratio (O/F)</td><td>2.1</td></tr>
-        <tr><td>Throttle Range</td><td>3:1</td></tr>
-        <tr><td>Tank Pressure</td><td>1000 psi</td></tr>
-        <tr><td>Flight Time</td><td>40 s</td></tr>
-        <tr><td>Total Mass</td><td>&lt;200 kg</td></tr>
-      </tbody>
-    </table>
+      <table>
+        <caption>Summary of Halo Targets</caption>
+        <tbody>
+          <tr><th>Target</th><th>Value</th></tr>
+          <tr><td>Max. Thrust</td><td>3 kN</td></tr>
+          <tr><td>Max. Chamber Pressure</td><td>400 psi</td></tr>
+          <tr><td>Oxidizer, Fuel</td><td>Nitrous Oxide, Ethanol</td></tr>
+          <tr><td>Mass Ratio, O/F</td><td>2.1</td></tr>
+          <tr><td>Throttle Range</td><td>3:1</td></tr>
+          <tr><td>Tank Pressure</td><td>1000 psi</td></tr>
+          <tr><td>Flight Time</td><td>40 s</td></tr>
+          <tr><td>Total Mass</td><td>&lt;200 kg</td></tr>
+        </tbody>
+      </table>
+    </section>
 
-    <h3>Halo Propulsion</h3>
-    <p><strong>Background:</strong> The Halo propulsion team is led by myself and one other member. We are the smallest of all sub-teams and fluctuate between two and five members, total.</p>
+    <section id="halo-propulsion">
+      <h3>Halo Propulsion</h3>
+      <p><strong>Background:</strong> The Halo propulsion team is led by myself and one other member. We are the smallest of all sub-teams and fluctuate between two and five members total.</p>
 
-    <p><strong>Scope:</strong> Propulsion is responsible for design, part selection, and justification of all propellant systems and the engine. This means making final decisions for propellants, pressures, geometries, etc. This includes selection of: regulators, valves, feed lines, propellant tanks, injector, combustion chamber, fitting assemblies, and throttle valves.</p>
+      <p><strong>Scope:</strong> Propulsion is responsible for design, part selection, and justification of all propellant systems and the engine. This means making final decisions for propellants, pressures, geometries, and related design choices. This includes selection of regulators, valves, feed lines, propellant tanks, injector, combustion chamber, fitting assemblies, and throttle valves.</p>
+    </section>
 
-    <h3>System Architecture</h3>
+    <section id="system-architecture">
+      <h3>System Architecture</h3>
 
-    <h4>Propellants</h4>
-    <p>Propellants were selected by the following considerations, in order of importance: practicality and availability, safety in handling, and finally, combustion properties.</p>
+      <h4>Propellants</h4>
+      <p>Propellants were selected by the following considerations, in order of importance: practicality and availability, safety in handling, and finally, combustion properties.</p>
 
-    <p>Practicality and availability is of highest importance to us because of our limited ability to safely store and transport propellants. This immediately excludes all cryogenic propellants.</p>
+      <p>Practicality and availability is of highest importance to us because of our limited ability to safely store and transport propellants. This immediately excludes all cryogenic propellants.</p>
 
-    <p>Limited access to safety training and equipment means a relatively non-toxic fuel that can be handled with simple eye and skin protection is favored.</p>
+      <p>Limited access to safety training and equipment means a relatively non-toxic fuel that can be handled with simple eye and skin protection is favored.</p>
 
-    <p>Performance is of smallest importance because we are not as limited by weight due to the VTVL flight objective. Because of the previous requirements, as well as its heritage in amateur liquid propellant rocketry, Nitrous Oxide (N<sub>2</sub>O) is the obvious choice.</p>
+      <p>Performance is of smallest importance because we are not as limited by weight due to the VTVL flight objective. Because of the previous requirements, as well as its heritage in amateur liquid propellant rocketry, nitrous oxide, N<sub>2</sub>O, is the obvious choice.</p>
 
-    <p>For fuel, by our previous criteria, our options are limited to petroleum fuels or alcohol fuels. The performance of each was evaluated using the NASA Chemical Equilibrium with Applications (CEA) tool. Using the python package RocketCEA, the following figure was created.</p>
+      <p>For fuel, by our previous criteria, our options are limited to petroleum fuels or alcohol fuels. The performance of each was evaluated using the NASA Chemical Equilibrium with Applications, CEA, tool. Using the Python package RocketCEA, the figure below was created.</p>
 
-    <figure id="fig-propellants">
-      <img src="Screenshot 2026-02-24 at 13.46.35.png" alt="Combustion properties of RP-1, Ethanol, and IPA" />
-      <figcaption>Combustion Properties of RP-1, Ethanol, IPA. Line shows MR of 2.1.</figcaption>
-    </figure>
+      <figure>
+        <img src="Screenshot 2026-02-24 at 13.46.35.png" alt="Combustion properties of RP-1, ethanol, and IPA" />
+        <figcaption>Combustion properties of RP-1, ethanol, and IPA. Line shows MR of 2.1.</figcaption>
+      </figure>
 
-    <p>Alcohol fuels were chosen for their performance at lower temperature, and Ethanol is our final selection for its slightly increased performance over IPA.</p>
+      <p>Alcohol fuels were chosen for their performance at lower temperature, and ethanol is our final selection for its slightly increased performance over IPA.</p>
 
-    <h4>Engine</h4>
-    <p>The engine geometry was sized using equations from the textbook <em>Rocket Propulsion Elements</em> by George P. Sutton and Oscar Biblarz. Our value for L* was chosen based on similar projects using N<sub>2</sub>O as an oxidizer, including Half Cat Sphinx.</p>
+      <h4>Engine</h4>
+      <p>The engine geometry was sized using equations from the textbook <em>Rocket Propulsion Elements</em> by George P. Sutton and Oscar Biblarz. Our value for L* was chosen based on similar projects using N<sub>2</sub>O as an oxidizer, including Half Cat Sphinx.</p>
 
-    <table>
-      <caption>Engine Geometry</caption>
-      <thead>
-        <tr>
-          <th>Parameter</th>
-          <th>Symbol</th>
-          <th>Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="group-row"><td colspan="3">Performance Parameters (RocketCEA)</td></tr>
-        <tr><td>Chamber temperature</td><td>T<sub>c</sub></td><td>1851 K</td></tr>
-        <tr><td>Characteristic velocity</td><td>c*</td><td>1355.6 m/s</td></tr>
-        <tr><td>Thrust coefficient</td><td>C<sub>F</sub></td><td>1.39</td></tr>
-        <tr><td>Expansion ratio</td><td>&epsilon;</td><td>3.65</td></tr>
-        <tr class="group-row"><td colspan="3">Dimensions</td></tr>
-        <tr><td>Chamber diameter</td><td>D<sub>c</sub></td><td>78.00 mm</td></tr>
-        <tr><td>Throat diameter</td><td>D<sub>t</sub></td><td>31.84 mm</td></tr>
-        <tr><td>Exit diameter</td><td>D<sub>e</sub></td><td>60.87 mm</td></tr>
-        <tr><td>Total length</td><td>L<sub>total</sub></td><td>287.88 mm</td></tr>
-        <tr><td>Characteristic length</td><td>L*</td><td>1.0 m</td></tr>
-        <tr><td>Chamber volume</td><td>V<sub>c</sub></td><td>796 cm<sup>3</sup></td></tr>
-        <tr class="group-row"><td colspan="3">Contour Parameters</td></tr>
-        <tr><td>Contraction ratio</td><td>&epsilon;<sub>c</sub></td><td>6.0</td></tr>
-        <tr><td>Convergent half-angle</td><td>&alpha;</td><td>30&deg;</td></tr>
-        <tr><td>Divergent half-angle</td><td>&beta;</td><td>15&deg;</td></tr>
-        <tr><td>Upstream throat arc</td><td>R<sub>1</sub></td><td>1.5 R<sub>t</sub> = 23.88 mm</td></tr>
-        <tr><td>Downstream throat arc</td><td>R<sub>n</sub></td><td>0.382 R<sub>t</sub> = 6.08 mm</td></tr>
-      </tbody>
-    </table>
+      <table>
+        <caption>Engine Geometry</caption>
+        <tbody>
+          <tr><th>Parameter</th><th>Symbol</th><th>Value</th></tr>
+          <tr><td colspan="3"><em>Performance Parameters, RocketCEA</em></td></tr>
+          <tr><td>Chamber temperature</td><td>T<sub>c</sub></td><td>1851 K</td></tr>
+          <tr><td>Characteristic velocity</td><td>c*</td><td>1355.6 m/s</td></tr>
+          <tr><td>Thrust coefficient</td><td>C<sub>F</sub></td><td>1.39</td></tr>
+          <tr><td>Expansion ratio</td><td>ε</td><td>3.65</td></tr>
+          <tr><td colspan="3"><em>Dimensions</em></td></tr>
+          <tr><td>Chamber diameter</td><td>D<sub>c</sub></td><td>78.00 mm</td></tr>
+          <tr><td>Throat diameter</td><td>D<sub>t</sub></td><td>31.84 mm</td></tr>
+          <tr><td>Exit diameter</td><td>D<sub>e</sub></td><td>60.87 mm</td></tr>
+          <tr><td>Total length</td><td>L<sub>total</sub></td><td>287.88 mm</td></tr>
+          <tr><td>Characteristic length</td><td>L*</td><td>1.0 m</td></tr>
+          <tr><td>Chamber volume</td><td>V<sub>c</sub></td><td>796 cm<sup>3</sup></td></tr>
+          <tr><td colspan="3"><em>Contour Parameters</em></td></tr>
+          <tr><td>Contraction ratio</td><td>ε<sub>c</sub></td><td>6.0</td></tr>
+          <tr><td>Convergent half-angle</td><td>α</td><td>30°</td></tr>
+          <tr><td>Divergent half-angle</td><td>β</td><td>15°</td></tr>
+          <tr><td>Upstream throat arc</td><td>R<sub>1</sub></td><td>1.5 R<sub>t</sub> = 23.88 mm</td></tr>
+          <tr><td>Downstream throat arc</td><td>R<sub>n</sub></td><td>0.382 R<sub>t</sub> = 6.08 mm</td></tr>
+        </tbody>
+      </table>
 
-    <h4>Pressure-Fed</h4>
-    <p>Our propellants are fed by pressuring the ullage above a piston with high pressure gas as seen on the left of the propellant tank figure below. Both propellant tanks are pressurized this way. Pressurizing N<sub>2</sub>O ensures N<sub>2</sub>O will be a liquid in our feed lines and through our injector. This way, pressure drops due to throttle valves and line losses do not lead to a two-phase flow and therefore the density is only a function of pressure and temperature.</p>
+      <h4>Pressure-Fed</h4>
+      <p>Our propellants are fed by pressurizing the ullage above a piston with high-pressure gas. Both propellant tanks are pressurized this way. Pressurizing N<sub>2</sub>O ensures N<sub>2</sub>O will be a liquid in our feed lines and through our injector. This way, pressure drops due to throttle valves and line losses do not lead to two-phase flow, and therefore the density is only a function of pressure and temperature.</p>
+    </section>
 
-    <h3>Component Design</h3>
+    <section id="component-design">
+      <h3>Component Design</h3>
 
-    <h4>Throttle Valves</h4>
-    <p>VTVL presupposes the ability to throttle the liquid propellant engine. Several studies have done tests on variable area cavitating venturi (VACV) valves to control mass flow rate of propellants. Also, VACVs act as both valves and dampers of propellant system vibrations. Our VACVs are designed from the paper <a href="https://www.sciencedirect.com/science/article/pii/S0955598614000582">Application of variable area cavitating venturi as a dynamic flow controller</a> by Tian et. al. The design allows for the mass flow of the entire feed line to be controlled by one valve as well as allowing for mass flow to vary nearly linearly with pintle stroke.</p>
+      <h4>Throttle Valves</h4>
+      <p>VTVL presupposes the ability to throttle the liquid propellant engine. Several studies have done tests on variable area cavitating venturi, VACV, valves to control mass flow rate of propellants. VACVs also act as both valves and dampers of propellant system vibrations. Our VACVs are designed from the paper <a href="https://www.sciencedirect.com/science/article/pii/S0955598614000582">Application of Variable Area Cavitating Venturi as a Dynamic Flow Controller</a> by Tian et al. The design allows for the mass flow of the entire feed line to be controlled by one valve, while allowing mass flow to vary nearly linearly with pintle stroke.</p>
 
-    <figure>
-      <div class="image-row">
-        <img src="Throttle Valve Geom..png" alt="VACV geometry from Tian et al." />
-        <img src="Throttle Valve Graph.png" alt="Predicted mass flow graph" />
-      </div>
-      <figcaption>VACV geometry from Tian et. al. (left). Predicted mass flow (red), linear approximation (green), limits (1.2 kg/s, 0.4 kg/s) in red (right).</figcaption>
-    </figure>
+      <figure>
+        <div class="image-row">
+          <img src="Throttle Valve Geom..png" alt="VACV geometry" />
+          <img src="Throttle Valve Graph.png" alt="Predicted mass flow graph" />
+        </div>
+        <figcaption>VACV geometry from Tian et al., left. Predicted mass flow, linear approximation, and limits, right.</figcaption>
+      </figure>
 
-    <figure>
-      <div class="image-row">
-        <img src="Throttle Valve 2D.png" alt="Oxidizer VACV 2D view" />
-        <img src="Throttle Valve 3D.png" alt="Oxidizer VACV 3D view" />
-      </div>
-      <figcaption>Oxidizer VACV valve.</figcaption>
-    </figure>
+      <figure>
+        <div class="image-row">
+          <img src="Throttle Valve 2D.png" alt="Oxidizer VACV 2D design" />
+          <img src="Throttle Valve 3D.png" alt="Oxidizer VACV 3D design" />
+        </div>
+        <figcaption>Oxidizer VACV valve.</figcaption>
+      </figure>
 
-    <p>To validate our designs before manufacturing, I did a mixture analysis using ANSYS Fluent and structural analysis using ANSYS Mechanical.</p>
+      <p>To validate our designs before manufacturing, I did a mixture analysis using ANSYS Fluent and structural analysis using ANSYS Mechanical and COMSOL.</p>
 
-    <figure>
-      <img src="Venturi Seal Plate FEA.png" alt="ANSYS Mechanical analysis of throttle seal plate" style="max-width: 50%;" />
-      <figcaption>ANSYS Mechanical analysis of throttle seal plate.</figcaption>
-    </figure>
+      <figure>
+        <img src="Venturi Seal Plate FEA.png" alt="ANSYS Mechanical analysis of throttle seal plate" style="max-width: 50%;" />
+        <figcaption>ANSYS Mechanical analysis of throttle seal plate.</figcaption>
+      </figure>
 
-    <figure>
-      <img src="Density Contours 800 psi out, geom. 1.png" alt="Density contours at 800 psi outlet" />
-      <figcaption>800 psi outlet.</figcaption>
-      <img src="Density Contours 600 psi out, geom. 1.png" alt="Density contours at 600 psi outlet" />
-      <figcaption>600 psi outlet.</figcaption>
-      <img src="Density Contours 500 psi out, geom. 1.png" alt="Density contours at 500 psi outlet" />
-      <figcaption>500 psi outlet.</figcaption>
-      <figcaption>N<sub>2</sub>O, contours of density. 1000 psi inlet, several outlet pressures.</figcaption>
-    </figure>
+      <figure>
+        <img src="Density Contours 800 psi out, geom. 1.png" alt="N2O density contours with 800 psi outlet" />
+        <figcaption>N<sub>2</sub>O density contours. 1000 psi inlet, 800 psi outlet.</figcaption>
+      </figure>
 
-    <p>The results of the simulation show cavitation, but present surprising evidence showing that flow is controlled in the diverging section, and not the throat. I am still resolving issues in the simulation to determine what the range of &Delta;Ps is that cause a constant mass flow. I am also considering geometries with longer throats.</p>
+      <figure>
+        <img src="Density Contours 600 psi out, geom. 1.png" alt="N2O density contours with 600 psi outlet" />
+        <figcaption>N<sub>2</sub>O density contours. 1000 psi inlet, 600 psi outlet.</figcaption>
+      </figure>
 
-    <h4 class="page-break">Propellant Tanks</h4>
-    <p>Propellant tanks were designed using Half Cat Rocketry's <a href="https://www.halfcatrocketry.com/propellant-tank">pressure vessel design guide</a>, <a href="https://www.halfcatrocketry.com/halfcatsim">Half Cat Sim</a>, and the <a href="https://www.parker.com/content/dam/Parker-com/Literature/O-Ring-Division-Literature/ORD-5700.pdf">Parker O-Ring Handbook</a>.</p>
+      <p>The results of the simulation show cavitation, but present surprising evidence showing that flow is controlled in the diverging section, and not the throat. I am still resolving issues in the simulation to determine what range of ΔP causes constant mass flow. I am also considering geometries with longer throats.</p>
 
-    <p>The most delicate part of the tank design is the bulkhead. Due to the large diameter, excess thickness contributes significantly to weight. I used ANSYS Mechanical to determine what thickness the bulkhead can be. To seal the bulkhead, I followed the Parker O-Ring handbook recommendations for static seals. O-Ring material compatibility was also considered. Viton or Buna-N were selected based on availability, with Viton preferred whenever available.</p>
+      <h4>Propellant Tanks</h4>
+      <p>Propellant tanks were designed using Half Cat Rocketry's <a href="https://www.halfcatrocketry.com/propellant-tank">pressure vessel design guide</a>, <a href="https://www.halfcatrocketry.com/halfcatsim">Half Cat Sim</a>, and the <a href="https://www.parker.com/content/dam/Parker-com/Literature/O-Ring-Division-Literature/ORD-5700.pdf">Parker O-Ring Handbook</a>.</p>
 
-    <figure id="fig-propellanttank">
-      <div class="image-row">
-        <img src="Screenshot 2026-02-24 at 14.37.14.png" alt="Propellant tank cross section" />
-        <img src="Screenshot 2026-02-24 at 15.42.40.png" alt="Bulkhead" />
-      </div>
-      <figcaption>Propellant tank cross section (left). Bulkhead (right).</figcaption>
-    </figure>
+      <p>The most delicate part of the tank design is the bulkhead. Due to the large diameter, excess thickness contributes significantly to weight. I used ANSYS Mechanical to determine what thickness the bulkhead can be. To seal the bulkhead, I followed the Parker O-Ring handbook recommendations for static seals. O-ring material compatibility was also considered. Viton or Buna-N were selected based on availability, with Viton preferred whenever available.</p>
 
-    <figure>
-      <div class="image-row">
-        <img src="Screenshot 2026-02-24 at 15.29.55.png" alt="ANSYS Mechanical result for tank bulkhead" />
-        <img src="Screenshot 2026-02-24 at 15.30.13.png" alt="ANSYS Mechanical result for tank bulkhead" />
-      </div>
-      <figcaption>ANSYS Mechanical for tank bulkheads. 1500 psi.</figcaption>
-    </figure>
+      <figure>
+        <div class="image-row three">
+          <img src="Screenshot 2026-02-24 at 14.37.14.png" alt="Propellant tank" />
+          <img src="Screenshot 2026-02-24 at 15.42.40.png" alt="Bulkhead" />
+          <img src="Screenshot 2026-02-24 at 15.29.55.png" alt="Bulkhead ANSYS Mechanical analysis" />
+        </div>
+        <figcaption>From left to right: propellant tank, bulkhead, and bulkhead ANSYS Mechanical analysis.</figcaption>
+      </figure>
 
-    <h4 class="page-break">Air Actuated Ball Valves</h4>
-    <p>Our larger propellant on/off valves require torque that reasonably sized servo motors cannot provide. Instead, air actuated on/off valves were selected. Off-the-shelf solutions were not found to be satisfactory. I designed a simple mount to connect our ball valves and air actuators such that it could be bent up from thin sheet metal.</p>
+      <p>Additionally, I created engineering drawings for all four bulkheads.</p>
 
-    <figure>
-      <img src="Screenshot 2026-02-24 at 15.37.18.png" alt="CAD for 3/4 inch NPT air actuated ball valve" style="max-width: 50%;" />
-      <figcaption>Rough CAD for 3/4 inch NPT Air Actuated Ball Valve.</figcaption>
-    </figure>
+      <figure>
+        <img src="Bulkhead Drawing.png" alt="Lower fuel tank bulkhead drawing" style="max-width: 50%;" />
+        <figcaption>Lower fuel tank bulkhead drawing.</figcaption>
+      </figure>
 
-    <h3 class="page-break">Propulsion Piping</h3>
-    <p>Much of my work as Propulsion Lead has been designing and justifying various pipe assemblies. Every assembly has been fought over, iterated, and thoroughly thought through. Below are just a couple examples of assemblies that have changed over time.</p>
+      <h4>Air and Servo Actuated Ball Valves</h4>
+      <p>Our larger propellant on/off valves require torque that reasonably sized servo motors cannot provide. Instead, air-actuated on/off valves were selected. Off-the-shelf solutions were not satisfactory. I designed a simple mount to connect our ball valves and air actuators such that it could be easily machined by basic lathe and vertical mill operations.</p>
 
-    <figure>
-      <div class="image-row three">
-        <img src="HP Assy. V3.png" alt="High pressure gas pipe assembly version 3" />
-        <img src="HP Assy. V4.png" alt="High pressure gas pipe assembly version 4" />
-        <img src="HP Assy. V5.png" alt="High pressure gas pipe assembly version 5" />
-      </div>
-      <figcaption>Progression of high pressure gas pipe assembly, from left to right.</figcaption>
-    </figure>
+      <figure>
+        <div class="image-row">
+          <img src="1:2 inch ball valve.png" alt="1/2 NPT air actuated ball valve" />
+          <img src="3:4 inch ball valve.png" alt="3/4 NPT air actuated ball valve" />
+        </div>
+        <figcaption>1/2 NPT air-actuated ball valve, left. 3/4 NPT air-actuated ball valve, right.</figcaption>
+      </figure>
 
-    <figure class="page-break">
-      <div class="image-row three">
-        <img src="Ox. Drain V3.png" alt="Oxidizer tank feed line pipe assembly version 3" />
-        <img src="Ox. Drain V4.png" alt="Oxidizer tank feed line pipe assembly version 4" />
-        <img src="Ox. Drain V5.png" alt="Oxidizer tank feed line pipe assembly version 5" />
-      </div>
-      <figcaption>Progression of oxidizer tank feed line pipe assembly, from left to right.</figcaption>
-    </figure>
-  </section>
+      <h4>Propellant Tank Mounts</h4>
+      <p>In order to mount our propellant tanks to the superstructure, a mounting system that is strong but allowed for adjustment was needed. To suit this need, I designed mounts cut from billet aluminum and rails bent from aluminum sheet.</p>
 
-  <section id="altaris" class="page-break">
-    <h2>Assembly and Launch Operations of Altaris - Gaucho Rocket Project</h2>
+      <figure>
+        <img src="Tank Mount.png" alt="Propellant tank mount" style="max-width: 50%;" />
+        <figcaption>Propellant tank mount.</figcaption>
+      </figure>
 
-    <p><strong>Skills developed:</strong> assembly, manufacturing, leadership, and organization.</p>
+      <h4>Fluids Assemblies</h4>
+      <p>Much of my work as Propulsion Lead has been designing and justifying various pipe assemblies. Every assembly has been debated, iterated, and thoroughly thought through. Below are a few examples of assemblies that have changed over time.</p>
 
-    <p><strong>Background:</strong> Like many others, GRP's first liquid propellant rocket was a Half Cat Rocketry design, <a href="https://www.halfcatrocketry.com/mojave-sphinx">Half Cat Sphinx</a>. What an incredible introduction it was!</p>
+      <figure>
+        <div class="image-row three">
+          <img src="HP Assy. V3.png" alt="High pressure gas pipe assembly version 3" />
+          <img src="HP Assy. V4.png" alt="High pressure gas pipe assembly version 4" />
+          <img src="HP Assy. V5.png" alt="High pressure gas pipe assembly version 5" />
+        </div>
+        <figcaption>Progression of high-pressure gas pipe assembly, from left to right.</figcaption>
+      </figure>
 
-    <p><strong>Personal responsibility:</strong> I assembled the propulsion assembly and led launch day operations including: on site assembly, ground support equipment setup, and hitting the big red button! The propulsion assembly on Sphinx is the: propellant tank, bulkheads, servo actuated valves, feed hoses, and propellant pipe assemblies.</p>
+      <figure>
+        <div class="image-row three">
+          <img src="Ox. Drain V3.png" alt="Oxidizer tank feed line pipe assembly version 3" />
+          <img src="Ox. Drain V4.png" alt="Oxidizer tank feed line pipe assembly version 4" />
+          <img src="Ox. Drain V5.png" alt="Oxidizer tank feed line pipe assembly version 5" />
+        </div>
+        <figcaption>Progression of oxidizer tank feed line pipe assembly, from left to right.</figcaption>
+      </figure>
+    </section>
 
-    <p>Altaris successfully launched with an apogee of 6100' as well as being successfully recovered with another launch coming up. Please find our launch video <a href="https://www.youtube.com/shorts/XH0TOY5dTvA">here</a>.</p>
+    <hr class="section-break" />
 
-    <figure>
-      <div class="image-row">
-        <img src="Screenshot 2026-02-24 at 16.18.28.png" alt="Altaris assembly on launch day" />
-        <img src="Screenshot 2026-02-24 at 16.15.08.png" alt="Living room workshop" />
-      </div>
-      <figcaption>Altaris assembly on launch day (left), living room workshop (right).</figcaption>
-    </figure>
-  </section>
+    <section id="altaris">
+      <h2>Assembly and Launch Operations of Altaris - Gaucho Rocket Project</h2>
 
-  <section id="course-work" class="page-break">
-    <h2>Course Work</h2>
+      <p><strong>Skills developed:</strong> assembly, manufacturing, leadership, and organization.</p>
 
-    <h3>Manufacturing of an Air Motor</h3>
-    <figure id="fig-airmotor">
-      <img src="ME12S Project.jpg" alt="Air motor" style="max-width: 50%;" />
-      <figcaption>Air motor.</figcaption>
-    </figure>
+      <p><strong>Background:</strong> Like many others, GRP's first liquid propellant rocket was a Half Cat Rocketry design, <a href="https://www.halfcatrocketry.com/mojave-sphinx">Half Cat Sphinx</a>. What an incredible introduction it was.</p>
 
-    <p>I used a manual lathe, CNC mill, tap and die, surface plate, reamer, and bandsaw to create the air motor shown above. I achieved best performance in the class (&gt;3000 RPM) because of tight tolerances and attention to detail during the machining process.</p>
-  </section>
+      <p><strong>Personal responsibility:</strong> I assembled the propulsion assembly and led launch day operations, including on-site assembly, ground support equipment setup, and hitting the big red button. The propulsion assembly on Sphinx is the propellant tank, bulkheads, servo-actuated valves, feed hoses, and propellant pipe assemblies.</p>
+
+      <p>Altaris successfully launched with an apogee of 6100 ft and was successfully recovered, with another launch coming up. Please find our launch video <a href="https://www.youtube.com/shorts/XH0TOY5dTvA">here</a>.</p>
+
+      <figure>
+        <div class="image-row">
+          <img src="Screenshot 2026-02-24 at 16.18.28.png" alt="Altaris assembly on launch day" />
+          <img src="Screenshot 2026-02-24 at 16.15.08.png" alt="Living room workshop" />
+        </div>
+        <figcaption>Altaris assembly on launch day, left. Living room workshop, right.</figcaption>
+      </figure>
+    </section>
+
+    <hr class="section-break" />
+
+    <section id="course-work">
+      <h2>Course Work</h2>
+      <h3>Manufacturing of an Air Motor</h3>
+
+      <figure>
+        <img src="ME12S Project.jpg" alt="Air motor" style="max-width: 50%;" />
+        <figcaption>Air motor.</figcaption>
+      </figure>
+
+      <p>I used a manual lathe, CNC mill, tap and die, surface plate, reamer, and bandsaw to create the air motor shown above. I achieved the best performance in the class, over 3000 RPM, because of tight tolerances and attention to detail during the machining process.</p>
+    </section>
+  </main>
 </body>
 </html>
