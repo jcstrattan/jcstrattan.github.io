@@ -91,6 +91,41 @@ h4 {
   margin-bottom: 0.25rem;
 }
 
+details.subsection {
+  margin: 1rem 0;
+}
+
+details.subsection > summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+details.subsection > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.subsection > summary h3 {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+details.subsection > summary h3::before {
+  content: "\25B8";
+  font-size: 0.9em;
+  color: #555;
+  transition: transform 0.15s;
+}
+
+details.subsection[open] > summary h3::before {
+  transform: rotate(90deg);
+}
+
+details.subsection > summary:hover h3 {
+  color: #1a4fbf;
+}
+
 a {
   color: #1a4fbf;
 }
