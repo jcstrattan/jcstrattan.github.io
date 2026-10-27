@@ -39,6 +39,69 @@ nav ol {
   padding-left: 1.5rem;
 }
 
+nav.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  border-top: none;
+  padding: 0;
+}
+
+nav.tabs a {
+  color: #555;
+  text-decoration: none;
+  padding: 0.5rem 0;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+}
+
+nav.tabs a:hover {
+  color: #1a4fbf;
+}
+
+nav.tabs a[aria-current="page"] {
+  color: #222;
+  font-weight: bold;
+  border-bottom-color: #222;
+}
+
+ul.toc,
+ul.toc ul {
+  list-style: none;
+  margin: 0;
+  padding-left: 0;
+}
+
+ul.toc ul {
+  padding-left: 2.75rem;
+}
+
+ul.toc summary {
+  cursor: pointer;
+  list-style: none;
+}
+
+ul.toc summary::-webkit-details-marker {
+  display: none;
+}
+
+ul.toc summary::before {
+  content: "\25B8";
+  display: inline-block;
+  width: 1.25rem;
+  text-align: center;
+  color: #555;
+  transition: transform 0.15s;
+}
+
+ul.toc details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+ul.toc > li > a {
+  margin-left: 1.25rem;
+}
+
 h2 {
   margin-top: 3rem;
   border-bottom: 1px solid #ccc;
@@ -79,6 +142,14 @@ figure.small img {
   max-width: 50%;
 }
 
+figure.medium img {
+  max-width: 80%;
+}
+
+figure figure {
+  margin: 0.75rem 0;
+}
+
 figcaption {
   font-size: 0.9rem;
   color: #555;
@@ -97,11 +168,27 @@ figcaption {
   min-width: 0;
 }
 
+.row.subfigures {
+  align-items: flex-end;
+}
+
+.row > figure {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
   margin: 1.5rem 0;
   font-size: 0.95rem;
+}
+
+table.compact {
+  width: auto;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 caption {
@@ -128,12 +215,22 @@ td.group {
   background: #f7f7f7;
 }
 
+mjx-container[display="true"] {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
 @media (max-width: 600px) {
   .row {
     flex-direction: column;
   }
 
-  figure.small img {
+  .row.subfigures {
+    align-items: center;
+  }
+
+  figure.small img,
+  figure.medium img {
     max-width: 100%;
   }
 
