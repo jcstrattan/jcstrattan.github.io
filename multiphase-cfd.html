@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casey Strattan – Multiphase CFD</title>
+  <link rel="stylesheet" href="style.css">
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<nav class="tabs">
+  <a href="index.html">Portfolio</a>
+  <a href="multiphase-cfd.html" aria-current="page">Multiphase CFD</a>
+</nav>
+
+<header>
+  <h1>Multiphase CFD</h1>
+  <p>Casey Strattan</p>
+  <p>May 2026</p>
+  <p><a href="main/20260528_Strattan-Multiphase-CFD_Resources_v1.1.pdf">Download PDF</a></p>
+</header>
+
+<section id="acknowledgments">
+  <h2>Acknowledgments</h2>
+  <p>Thank you, Professor Matthys for your support with this project; I couldn't have done it without your words of encouragement and feedback along the way.</p>
+</section>
+
+<nav>
+  <h2>Contents</h2>
+  <ul class="toc">
+    <li><a href="#introduction">1. Introduction</a>
+      <ul>
+        <li><a href="#halo">1.1 Gaucho Rocket Project: “Halo”</a></li>
+        <li><a href="#oxidizer-selection">1.2 Oxidizer Selection</a></li>
+        <li><a href="#two-phase-n2o">1.3 Two-Phase Nitrous Oxide</a></li>
+        <li><a href="#predicting-mass-flow">1.4 Predicting Mass Flow Rate</a></li>
+      </ul>
+    </li>
+    <li><a href="#existing-models">2. Existing Models</a>
+      <ul>
+        <li><a href="#empirical-models">2.1 Empirically Derived Models</a></li>
+      </ul>
+    </li>
+    <li><a href="#comsol">3. COMSOL</a></li>
+    <li><a href="#openfoam-vs-comsol">4. OpenFOAM vs. COMSOL</a>
+      <ul>
+        <li><a href="#fvm-vs-fem">4.1 FVM vs. FEM</a></li>
+      </ul>
+    </li>
+    <li><a href="#intro-openfoam">5. Introduction To OpenFOAM</a>
+      <ul>
+        <li><a href="#fv-schemes">5.1 Finite Volume Schemes</a></li>
+      </ul>
+    </li>
+    <li><a href="#meshing">6. Meshing</a></li>
+    <li><a href="#environment-setup">7. OpenFOAM Environment Setup</a></li>
+    <li><a href="#openfoam-simulation">8. OpenFOAM Simulation</a>
+      <ul>
+        <li><a href="#tutorials">8.1 Tutorials</a></li>
+        <li><a href="#compressible-vof">8.2 CompressibleVoF</a></li>
+        <li><a href="#multiphase-euler">8.3 MultiphaseEuler</a></li>
+        <li><a href="#runs-8-10">8.4 Run 8 - 10</a></li>
+        <li><a href="#run-11">8.5 Run 11</a></li>
+        <li><a href="#run-12">8.6 Run 12</a></li>
+        <li><a href="#run-13">8.7 Run 13</a></li>
+      </ul>
+    </li>
+    <li><a href="#conclusion">9. Concluding Remarks</a></li>
+    <li><a href="#appendix-a">A. Multiphase Modules in OpenFOAM-12</a>
+      <ul>
+        <li><a href="#appendix-a1">A.1 CompressibleVoF</a></li>
+        <li><a href="#appendix-a2">A.2 MultiphaseEuler</a></li>
+      </ul>
+    </li>
+    <li><a href="#appendix-b">B. N<sub>2</sub>O Properties</a></li>
+    <li><a href="#references">References</a></li>
+  </ul>
+</nav>
+
+<!-- ============================================================ -->
+<section id="introduction">
+  <h2>1. Introduction</h2>
+
+  <h3 id="halo">1.1 Gaucho Rocket Project: “Halo”</h3>
+  <p>“Halo” is Gaucho Rocket Project (GRP)s entry for competing in the Collegiate Propulsive Lander Challenge (CPLC). CPLC has many milestones, the most ambitious of which is the “Hop”; a full ascent, translation, and propulsive landing.</p>
+  <p>Halo is a pressure fed, throttled, liquid-liquid bi-propellant rocket. This means we use two liquid propellants (a fuel and an oxidizer) and each tank is pressurized by a separate pressurant. For simplicity, we often decompose the system into three distinct sections: high pressure, oxidizer and fuel. Every system has at least a fill, drain, emergency pressure release, main valve, and sensors. See <a href="#fig-1-1">figure 1.1</a> for two piping and instrumentation diagrams (P&amp;ID). The oxidizer diagram is almost identical to the fuel one.</p>
+
+  <figure id="fig-1-1">
+    <div class="row subfigures">
+      <figure>
+        <img src="main/HP_Arch.png" alt="P&amp;ID of the high pressure system">
+        <figcaption>(a) High Pressure System</figcaption>
+      </figure>
+      <figure>
+        <img src="main/Ox._Arch.png" alt="P&amp;ID of the oxidizer system">
+        <figcaption>(b) Oxidizer systems</figcaption>
+      </figure>
+    </div>
+    <figcaption>Figure 1.1: P&amp;ID of high pressure and oxidizer systems.</figcaption>
+  </figure>
+
+  <h3 id="oxidizer-selection">1.2 Oxidizer Selection</h3>
+  <p>The selection of propellants is one of the most consequential decisions in system design as it establishes the basis upon which nearly every subsequent engineering choice is made. The propellant combination determines not only performance parameters, like specific impulse and thrust, but also tank materials, pressurization schemes, injector design, ignition method, and ground handling procedures.</p>
+  <p>Before evaluating candidates, it is necessary to establish the criteria against which they were judged. For a 200 kg VTVL hopper with a 3 kN engine and estimated 1 minute flight duration, the following factors were considered in descending order of importance.</p>
+  <p>Safety and handling characteristics dominate the selection for this club without dedicated handling and storage support. Propellants must be non-hypergolic (eliminating the possibility of unintended ignition), low in acute toxicity (permitting handling without specialized protective equipment), and compatible with common materials (to avoid exotic alloys or coatings). Cryogenic propellants, while ideal in many ways, introduce handling complexity, boil-off losses, acquisition complexity, and require storage solutions that are impractical for GRP.</p>
+  <p>Availability and cost logically follow for a project that will consume propellant during numerous cold-flow tests, hot-fires, development campaigns, and flight attempts. Propellants available from standard chemical suppliers are strongly preferred.</p>
+  <p>System simplicity directly influences development time and cost. Self pressurizing or easily pressurized propellants eliminate the need for turbo machinery, reducing the engine to a pressure-fed architecture with less complexity and opportunities for failure. Propellants that remain liquid at or near ambient temperature simplify tank insulation requirements and ground support equipment.</p>
+  <p>Engine thrust requirement evolved much during the early design process. Initial sizing assumed 1.5 kN based on a 1.5×thrust-to-weight for a 100 kg wet mass. Subsequent trajectory optimization and control analysis increased this to 2.5 kN to provide adequate authority for aggressive maneuvering during flight. Later, when the team shifted aims to competing in CPLC, this thrust was revised to 3 kN to meet the challenge requirements. The selection criteria remain unchanged by this thrust increase, but it does affect mass flow rates, tank sizing, and margins throughout the system.</p>
+  <p>Given these requirements, N<sub>2</sub>O stands above other candidates due to is availability from automotive supply shops, easy storage requirements, self pressurization, and lastly its well established heritage as the oxidizer of choice for hobbyist rocketry.</p>
+
+  <h3 id="two-phase-n2o">1.3 Two-Phase Nitrous Oxide</h3>
+  <p>N<sub>2</sub>Os most noteworthy property is its relatively high saturation pressure at reasonable temperatures. As seen in <a href="#fig-1-2">Figure 1.2</a>, saturation pressure at 0C is about 2 Mpa or 300 psi, and increasing rapidly with subsequent heating. This property can be both a boon and bane, depending on the context.</p>
+
+  <figure id="fig-1-2" class="small">
+    <img src="main/n2o_density_vs_pressure.png" alt="Nitrous oxide density vs pressure for multiple isotherms">
+    <figcaption>Figure 1.2: Nitrous Oxide density vs pressure, multiple isotherms.</figcaption>
+  </figure>
+
+  <p>This property is very advantageous for reducing complexity because it does not necessitate additional pressurization or pumping to achieve sufficient flow rates between onboard tanks and the engine. However, because combustion chamber temperatures are usually large enough and low enough pressure, N<sub>2</sub>O is expected to vaporize at some point and to some volume fraction before exiting flow controlling geometry (i.e. the injector); this makes mass flux prediction extremely difficult. This very topic is the motivation of this work.</p>
+  <p>Consider the two situations in <a href="#fig-1-3">figure 1.3</a>. The first shows a low vapor pressure fluid where the downstream pressure is greater than the vapor pressure and the second shows a high vapor pressure fluid whose vapor pressure is greater than the downstream pressure. Propellants like liquid oxygen are much more like the first case but N<sub>2</sub>O is much like the second.</p>
+
+  <figure id="fig-1-3" class="medium">
+    <img src="main/waxman_injector.png" alt="Low and high vapor pressure fluids flowing through an injector, with pressure profiles">
+    <figcaption>Figure 1.3: Visualization of two fluids: (a) a low vapor pressure fluid that exits the geometry as a liquid, (b) a high vapor pressure liquid that exits the geometry as a gas or two-phase mixture. Copied from Waxman, 2014.</figcaption>
+  </figure>
+
+  <p>While Halo does not use flow controling geometry in its injector, other rockets such as our high altitude “Altaris” rocket do. Additionally, this high vapor pressure is leveraged in our throttles that use the cavitating venturi effect to limit flow rate while minimizing pressure losses.</p>
+
+  <figure id="fig-1-4" class="medium">
+    <img src="main/cav_ven_halo.png" alt="Section view of the Halo cavitating venturi">
+    <figcaption>Figure 1.4: Halo cavitating venturi.</figcaption>
+  </figure>
+
+  <figure id="fig-1-5" class="medium">
+    <img src="main/cav_ven_hyroshi.png" alt="Cavitation in a venturi at an upstream pressure of 0.40 MPa">
+    <figcaption>Figure 1.5: Example of cavitating venturi adapted from Soyama et. al., 2016.</figcaption>
+  </figure>
+
+  <p><a href="#fig-1-4">Figure 1.4</a> shows one of two cavitating venturi designed for Halo. It uses a pintle (in green) precisely controlled by a linear stepper motor (in pink and orange) to control flow rate through restriction. Interestingly, because of particular geometry, flow rate is linear with pintle stroke and therefore should be easily predicted and, since trust is linearly related to mass flow rate, thrust is linearly related to this pintles stroke.</p>
+  <p>An aspect of why flow can be linearly dependent on pintle stroke is due to a “choking” effect that this device has on the flow. Because vapor can condense at any point in the expansion section it acts as one would expect choked flow would be; it maintains the same mass flow rate below a critical downstream pressure. This is something most conventional throttle valves, such as butterfly valves, cannot offer and was important to us because without the ability to diligently characterize the flow through each flow geometry using CFD or empirical testing, we could not accurately predict mass flow rate based on throttle position alone.</p>
+  <p>Another advantage is that the much more compressible gas in the flow serves to damp engine vibrations that propagate through the propellant in the feed lines. While it might seem like a trivial problem, it turns out that vibrations in liquid engines are really significant and depending on geometry and fluid architecture can be bad enough to cause uncontrollable oscillations. At best these oscillations extinguish the engine, but at worst can cause excessive pressures or forces that lead to “unplanned disassembly”, so to speak.</p>
+
+  <h3 id="predicting-mass-flow">1.4 Predicting Mass Flow Rate</h3>
+  <p>For applications to the above subjects I hope that it is clear how important predicting mass flow rate is both for design of components as well as predicting engine performance. This is the goal of this project: to accurately predict mass flux of a high vapor pressure liquid through any given geometry where the downstream pressure is less than the vapor pressure of the fluid.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="existing-models">
+  <h2>2. Existing Models</h2>
+
+  <h3 id="empirical-models">2.1 Empirically Derived Models</h3>
+  <p>Semi-empirical analytical models exist to the effect of predicting the mass flux through very particular geometries such as sharp edged inlet and outlet channels with given L/D. The thesis by Banjamin Waxman, 2014 contains a wonderful review on injector flow rate modeling which I read carefully as part of this project, therefore some key models mentioned there are summarized here.</p>
+
+  <p><strong>Single phase incompressible</strong> is nearly the simplest possible model. It states that the mass flow rate through any orifice is:</p>
+  \[
+  \dot{m}_{\mathrm{SPI}} = C_d A_2 \sqrt{2\rho \Delta P}
+  \]
+  <p>where \(\dot{m}\) is mass flux, \(C_d\) is coefficient of discharge, \(A_2\) is the orifice area, and \(\Delta P\) is the pressure differential across the orifice. Further refinements of this include accounting for compressibility effects, frictional losses, etc.</p>
+
+  <p><strong>Equilibrium models</strong> assume that the liquid and vapor phases are in thermodynamic equilibrium at every point in the flow (not always true). The <strong>Homogeneous Equilibrium Model</strong> is the simplest of these models and assumes there is no slip between the phases at all and that the flow is isentropic. The mass flow rate is determined as follows:</p>
+  \[
+  \dot{m}_{\mathrm{HEM}} = C_d A \rho_2 \sqrt{2(h_1 - h_2)}
+  \]
+  <p>where \(h_2\) is the downstream enthalpy and \(h_1\) is determined by:</p>
+  \[
+  h_1 = h_2 + \frac{1}{2}u_2^2
+  \]
+  <p>As I will address multiple times during this work, it is (surprisingly) often not the case that the fluid is in thermodynamic equilibrium.</p>
+
+  <p><strong>Non-equilibrium models</strong> are models that assume there is some lag before the liquid begins to change phase; the liquid is said to be in a metastable state and is in thermodynamic dis-equilibrium because it is under the saturation dome but is still all liquid. <a href="#fig-2-1">Figure 2.1</a> shows some paths that the fluid might take on a p-rho graph.</p>
+  <p>The metastable region shown is a representation of some places on the graph that the fluid might exist as all liquid, while still being under the saturation dome.</p>
+
+  <figure id="fig-2-1" class="medium">
+    <img src="main/waxman_metastable.png" alt="Pressure-density diagram showing the metastable liquid region under the saturation dome">
+    <figcaption>Figure 2.1: Metastable liquid under the saturation dome. Copied from Waxman, 2014.</figcaption>
+  </figure>
+
+  <p>The simplest non-equilibrium model is one that assumes there is slip between phases, but the vapor fraction is fixed and remains the same through the entire flow. One such model is that by Burnell, who says the maximum or critical flow rate is given by:</p>
+  \[
+  \dot{m}_{BURNELL,crit} = C_d A_2 \sqrt{2\rho_1 \left[P_1 - (1-C)P_v\right]}
+  \]
+  <p>where \(C\) is an empirically derived coefficient that represents the superheating of the fluid as it enters a metastable state and/or a decrease in temperature during the expansion process and therefore a decrease in the vapor pressure.</p>
+
+  <p><strong>Generalized non-equilibrium models</strong> allow for both the slip of phases and the evolution of the phase change. One such model is proposed by Dyer et al., who says that non-equilibrium effects are mostly caused by superheating of the liquid during expansion and finite vapor bubble growth rate. They propose an analytical model that combines the SPI and HEM models:</p>
+  \[
+  \dot{m}_{DYER}
+  = A\left(
+  \frac{\kappa}{1+\kappa}\dot{m}_{SPI}
+  +
+  \frac{1}{1+\kappa}\dot{m}_{HEM}
+  \right)
+  \]
+  <p>where \(\kappa\) is an analytical correction parameter that is a function of pressure differential and other flow variables. For more detail I cannot recommend Waxman's chapter two, “Injector Flow Rate Modeling” more.</p>
+  <p>The paper by Songtao et. al., 2019 takes these analytical methods even further and proposes an alaytical equation that can be used in 1D to numerically solve for the pressure drop through a these small geometries. It incorporates bubble dynamics and establishes some critical pressure and length at which flow suddenly flashes from its metastable state to a large vapor fraction mixture some distance from the <em>vena contracta</em>, labled “v.c.” in <a href="#fig-1-5">figure 1.5</a>. I spent a considerable amount of time trying to understand the math, but got only far enough to know that I did not make much progress towards understanding the methods, even with several hours of Professor Bennet's time.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="comsol">
+  <h2>3. COMSOL</h2>
+  <p>With the preceding information and motivations in mind, I originally planned to attempt an application of the method proposed by Songtao et. al. and solve for the location of this critical point in a flow of nitrous oxide. The hope was to leverage mass flux data from Waxman's thesis to guess-and-check for this critical point. Safe to say this did not get very far once I started trying to replicate the math. Therefore, I refocused my efforts to COMSOL where I hoped to again use the data to tune an empirical parameter in the model that would encapsulate the metastability of the flow.</p>
+  <p>The objective was to create a two-phase heat transfer and fluid flow multiphysics that would not only handle the two dimensional turbulent flow field but also the mass transfer between phases, modified by this aforementioned parameter. I chose COMSOL because I wanted to become familiar with the tool and I knew it provided users with ways of inputting custom equations.</p>
+  <p>I started by doing the simple single-phase tutorials for laminar flow and turbulent flow. Once I had mastered these studies, I wanted to venture into the multiphase world. The first runs I did were steady, single phase flow, laminar and turbulent. For whatever reason I didn't save any images nor the project files, but these first runs were critical in understanding how numerical solvers like to converge, what kinds of boundary conditions are easy or harder to solve, and what kinds of strategies one can employ when a simulation is not converging. COMSOL offered an intuitive UI for me to explore numerical solvers and helped me gain critical intuition.</p>
+  <p>Because of COMSOL I know that pressure inlet pressure outlet boundary conditions are hard for numerical solvers. I also know that in COMSOL, if I am having convergence issues (which happens often), refining the mesh or adding ramped inlet or outlet conditions can help. I also learned about parametric sweeps to determine what values of particular variables cause the simulation to blow up. I learned techniques when making geometry to help with computation time and convergence such as chamfering or filleting sharp corners and running antisymmetric simulations whenever possible. While these are valuable skills, I also learned more generalizable ones like establishing a repeatable workflow; a skill that served me well with OpenFOAM simulations that don't have a UI. I often find myself following a similar workflow in OpenFOAM as in COMSOL: geometry and meshing, boundary conditions, study parameters, run, view results, debug, etc.</p>
+  <p>Something I certainly did not understand at the time of making my first COMSOL studies was that turbulent physics' is challenging to use with stationary studies. This is not something I realized until far into my OpenFOAM work but in retrospect may have caused many of the struggles I had with COMSOL. The reason is that turbulence is a naturally chaotic process and turbulence models introduce instabilities into the governing equations on purpose. Because of these instabilities, this can cause stationary simulations to never converge or, if they do, converge on some nonphysical average of the turbulence.</p>
+  <p>When I felt ready to tackle multiphase work, I began by doing a small literature search for “multiphase COMSOL” or “cavitation using COMSOL”, but only found papers that handled acoustic cavitation or single bubble dynamics. I then turned to the user guide and application libraries and realized that COMSOL does not have a built in cavitation or flashing model meaning that I would need to apply the reactive flows, heat transfer, fluid flow, and more studies all at once. Unfortunately, this was too much for me. While this was a failure in respect to multiphase flows, this was a valuable experience because it helped me visualize the flow field around the inlet and around the various tutorial geometries; I found this all to be very insightful for developing intuition about fluid flows.</p>
+
+  <figure id="fig-3-1">
+    <img src="main/COMSOL%20turbulent.png" alt="COMSOL velocity field of a jet through an injector-like channel">
+    <figcaption>Figure 3.1: COMSOL time dependant study of injector-like geometry, t=0.3s.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ -->
+<section id="openfoam-vs-comsol">
+  <h2>4. OpenFOAM vs. COMSOL</h2>
+
+  <h3 id="fvm-vs-fem">4.1 FVM vs. FEM</h3>
+  <p>At a fundamental level, OpenFOEAM differs from COMSOL in that OpenFOAM uses the Finite Volume Method (FVM) whereas COMSOL uses the Finite Element Method (FEM). The aim of both methods is to take the continuous flow domain and discretize it. The FVM method breaks the domain into many small polyhedron (volumes with flat faces), then applies conservation laws on the governing equations through each volume. This compares to FEM where the whole field is discretized into points that are used to create a system of equations for the field which is then solved all together. This difference matters enormously. In a way, FVM is inherently conservative; mass, momentum, and energy are balanced between adjacent cells because whatever flux leaves one cell must enter its neighbor. FEM does not have this guarantee by default.</p>
+  <p>Another difference is the way that advection &amp; diffusion is handled. FVM simply uses the components of flow at each cell face in the direction of fluid motion and advected properties can be accounted for by weighing contribution from upwind and downwind cells. The system of equations created in FEM are not dependent on flow direction, and therefore require extra steps to determine the effects from upwind and downwind elements. This can cause instabilities, particularly when flow velocities are higher (spurious oscillations).</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="intro-openfoam">
+  <h2>5. Introduction To OpenFOAM</h2>
+  <p>Open-source Field Operation And Manipulation (OpenFOAM) is a software package written in C and C++. To understand the rest of this work, it will be important to first understand the basic OpenFOAM structure; what follows is an introduction to OpenFOAM case structure, capabilities, and constraints.</p>
+  <p>An OpenFOAM “case” is a directory that holds all subdirectories, run files, and outputs related to the simulation. Cases must always have constant, system, and time subdirectories.</p>
+  <p>The <em>system</em> directory contains, at minimum: controlDict; used to set necessary parameters like start time, end time, and solver, as well as optional parameters like enabling adjustable time step and specifying optional outputs, fvSchemes; used to set which schemes to use when converting PDE terms into finite-volume algebraic equations, and fvSolution; used to set what schemes should be used when solving the discretized equations.</p>
+  <p>The <em>constant</em> directory contains constants used during the simulation such as material properties and geometry. The constant/polyMesh directory contains all the information about your mesh and its boundary types.</p>
+  <p>The time directories are named according to their associated time and contain files like “p” and “U” that store the named variable for every finite volume in the mesh.</p>
+
+  <figure id="fig-5-1">
+    <div class="row subfigures">
+      <figure style="flex: 0.305;">
+        <img src="main/OpenFOAM%20Case%20Structure.png" alt="General OpenFOAM case directory structure">
+        <figcaption>(a)</figcaption>
+      </figure>
+      <figure id="fig-5-1b" style="flex: 0.38;">
+        <img src="main/div_schemes.png" alt="divSchemes entries in fvSchemes">
+        <figcaption>(b)</figcaption>
+      </figure>
+      <figure style="flex: 0.23;">
+        <img src="main/0_direc.png" alt="Contents of the 0 time directory">
+        <figcaption>(c)</figcaption>
+      </figure>
+    </div>
+    <figcaption>Figure 5.1: (a) general OpenFOAM case structure, (b) div schemes function in fvSchemes for my flashing case, (c) my <em>0</em> time directory for my case.</figcaption>
+  </figure>
+
+  <h3 id="fv-schemes">5.1 Finite Volume Schemes</h3>
+  <p>The PDEs that OpenFOAM solves must, of course, be discretized. The “fvSchemes” dict file is used to set default and specific schemes for use on each type of term. As discussed previously, OpenFOAM is just solving the Gauss-Ostrogradsky divergence theorem or as I know it, the control volume method. The quantities advected by a flow field at a face must be interpolated from the upwind cells. The fv schemes are how those interpolations are done. Every scheme balances three fundamental aspects of the simulation:</p>
+  <p><strong>Accuracy</strong> refers to how close the numerical result is to the real analytical solution. The higher the order of the scheme, the fewer nearby cells must be read to approximates the gradient at each cell. This is advantageous when you have smooth gradients, but disadvantageous when you have very steep gradients because the solver can overshoot or oscillate.</p>
+  <p><strong>Stability</strong> refers to how well the solution converges. Unstable schemes can have uncontrolled oscillation that blow up the solution. Classically the more accurate the scheme is, the less stable it is.</p>
+  <p><strong>Bounded</strong> refers to to how well a scheme can prevent physically impossible values through relaxation factors and clipping. They essentially sacrifice accuracy for convergence.</p>
+  <p>Choosing the right scheme is quite challenging considering that there are nearly twenty schemes to choose from for divSchemes alone. For this reason I had AI populate the fields as a stop gap. As seen in <a href="#fig-5-1b">figure 5.1b</a> I am using vanLeer for all the volume fraction properties and limitedLinear for nearly all the rest. These are good general selections since vanLeer is a Total Variation Diminishing (TVD) scheme meaning that it actively damps oscillations. This is essential for fields like volume fraction that can jump between nearly 0 and 1 very quickly; vanLeer can prevent overshoots. limitedLinear is also a safe choice since it is TVD and is more bounded than upwind or linear. The modifier 1 for all the values is the limiter coefficient with 1 being all of the scheme and lower numbers meaning more diffusive but less oscillatory. If I was having issues with unphysical oscillations I could turn some of these values down to help diffuse that.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="meshing">
+  <h2>6. Meshing</h2>
+  <p>Meshing in COMSOL or Fluent is integrated into the software however OpenFOAM has much more limited in-software capability. There are functions such as blockMesh and snappyMesh that can help with rudimentary meshing operations but the lack of immediate visualization makes these options unhelpful; particularly for the present case.</p>
+
+  <figure id="fig-6-1" class="small">
+    <img src="main/gmsh_blank_GUI.png" alt="Blank gmsh graphical user interface">
+    <figcaption>Figure 6.1: Blank gmsh GUI.</figcaption>
+  </figure>
+
+  <p>One has the option to also import a mesh into OpenFOAM from several sources such as ANSYS Fluent or, as in this study, gmsh. Gmsh is a standalone, open source program developed to help create and visualize meshes. In addition to visualization tools, the program allows users to directly modify the C++ script that is used to build the mesh. While the program has a GUI that allows users to click buttons that change the mesh, each button just appends the associated command to the end of script so I opted to modify the script directly. To say that this process was difficult would be an understatement. The short of the long of the script is: I create points that bound my 2D geometry including small chamfers at the inlet/outlet, I create lines that connect the points, I create a surface bounded by that line, I extrude that surface (which extrudes the bounding lines and points), I name the surfaces and volume as “inlet”, “outlet”, etc., then I make several bounding boxes used to refine the mesh in particular areas.</p>
+  <p>For a time I thought that COMSOL's meshing capabilities would be good to use in OpenFOAM, however I quickly realized that COMSOL meshes are not directly compatible with OpenFOAM, requiring modification before import. COMSOL meshes are well optimized for FEM simulations which is different from the kind of meshes that work well for FVM simulations.</p>
+
+  <figure id="fig-6-2">
+    <figure>
+      <img src="main/axisym_attempt_1.png" alt="Axisymmetric mesh attempt in gmsh, side view">
+    </figure>
+    <figure>
+      <img src="main/axisym_attempt_2.png" alt="Axisymmetric mesh attempt in gmsh, close-up of the wedge">
+    </figure>
+    <figcaption>Figure 6.2: Attempt at making an antisymmetric mesh in gmsh.</figcaption>
+  </figure>
+
+  <p>A key difference between FVM and FEM meshes stems from the fact that FVM handles surface fluxes therefore necessitating the existence of volumes. In order to do a 2D or antisymmetric simulation, one must make a 1 cell thick plane or wedge as seen in <a href="#fig-6-2">figure 6.2</a>. The wedge was nigh impossible to do in gmsh. When rotating the plane to create the wedge, gmsh would create a mystery surface of 0 area between the line that rotates about the axis and itself which I did not find a way to delete or be prevented for being created (the line just near the “20” in <a href="#fig-6-2">figure 6.2</a>. For this reason, I decided to focus on making a full 2D geometry at the cost of higher computation in exchange for my sanity.</p>
+
+  <figure id="fig-6-3">
+    <img src="main/2D_mesh_geom.png" alt="Single-cell-thick extruded 2D mesh">
+    <figcaption>Figure 6.3: Cell volumes for 2D mesh.</figcaption>
+  </figure>
+
+  <p>As seen in <a href="#fig-6-3">figure 6.3</a>, the 2D mesh is just a 2D mesh layer extruded by exactly 1 cell everywhere. To ensure that the simulation does not treat these front and back surfaces as walls, there is an “empty” boundary type that tells the simulation that there are no fluxes through those front and back surfaces. After many versions, my final bounding geometry is shown in <a href="#fig-6-4">figure 6.4</a>.</p>
+
+  <figure id="fig-6-4">
+    <img src="main/master_channel_bounds.png" alt="Final 2D mesh bounding geometry">
+    <figcaption>Figure 6.4: Final 2D mesh bounds.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ -->
+<section id="environment-setup">
+  <h2>7. OpenFOAM Environment Setup</h2>
+  <p>Through a different research project I have access to UCSB General Research and IT High Performance Computing (GRIT HPC). Foreseeing that some of these simulations might require a lot of compute, I took some time to setup OpenFOAM in HPC using the VSCode server interactive application.</p>
+  <p>Installing OpenFOAM is as simple as cloning the gitLab repository then compiling the code. Compiling code means changing it from the human readable format to binary files the computer can read and execute. Since OpenFOAM is a fairly large software, this takes quite some time. Thinking ahead, I decided to try to poke around some of the files and made some copies and modifications of my own within the package contents. Unfortunately, when the compiler got to this part of the package it noticed the changes, did not compile any of the solvers and silently moved on. All this to say for the first week of using the software I was constantly ruining into the strangest errors until I realized my mistake!</p>
+  <p>Because OpenFOAM is nothing more than a collection of command line tools, getting all the required tools to work together was also a challenge. To take advantage of the increased compute power available to me I needed to setup multi threading; where a process is split up and solved on multiple cores, in parallel, at once. The tool used to do this is called Message Passing Interface (MPI) and was particularly challenging to setup within the permissions of my account on HPC.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="openfoam-simulation">
+  <h2>8. OpenFOAM Simulation</h2>
+  <p>This section will be broken down by runs. These runs represent nothing more than the distinction between some change in the simulation; perhaps a different boundary condition or more refined mesh. For brevity, I have summarized my early runs which were going wrong mostly due to me learning the tool.</p>
+
+  <h3 id="tutorials">8.1 Tutorials</h3>
+  <p>After getting the software running, the first test was to run one of the pre-compiled tutorials. The first tutorial I ran was “dam break four phase laminar” which is, as the name implies, four phases sloshing in a tank. This took quite a long time to run on just on four cores: upwards of three hours. See results of the first four timesteps in <a href="#fig-8-1">figure 8.1</a>.</p>
+
+  <figure id="fig-8-1">
+    <div class="row subfigures">
+      <figure>
+        <img src="main/damBreak1.png" alt="Dam break at t = 0.05">
+        <figcaption>(a) t = 0.05</figcaption>
+      </figure>
+      <figure>
+        <img src="main/damBreak2.png" alt="Dam break at t = 0.1">
+        <figcaption>(b) t = 0.1</figcaption>
+      </figure>
+      <figure>
+        <img src="main/damBreak3.png" alt="Dam break at t = 0.15">
+        <figcaption>(c) t = 0.15</figcaption>
+      </figure>
+      <figure>
+        <img src="main/damBreak4.png" alt="Dam break at t = 0.2">
+        <figcaption>(d) t = 0.2</figcaption>
+      </figure>
+    </div>
+    <figcaption>Figure 8.1: Dam break first four time steps, substances delineated by color.</figcaption>
+  </figure>
+
+  <p>Encouraged by the success, I next ran the “throttle” tutorial. I realized that this throttle tutorial is just like what I want to do!</p>
+
+  <figure id="fig-8-2" class="small">
+    <img src="main/throttle_tutorial_geom.png" alt="Throttle tutorial geometry">
+    <figcaption>Figure 8.2: Throttle tutorial geometry.</figcaption>
+  </figure>
+
+  <figure id="fig-8-3" class="medium">
+    <figure>
+      <img src="main/throttle_tut_U.png" alt="Throttle tutorial velocity magnitude">
+      <figcaption>(a) U</figcaption>
+    </figure>
+    <figure>
+      <img src="main/throttle_tut_U_channel.png" alt="Throttle tutorial, close-up of the channel">
+      <figcaption>(b) alpha vapor</figcaption>
+    </figure>
+    <figcaption>Figure 8.3: Throttle tutorial at t=1s.</figcaption>
+  </figure>
+
+  <p>This tutorial applies the compressibleVoF module using the SchnerrSauer cavitation model. Results displayed in <a href="#fig-8-3">figure 8.3</a>.</p>
+
+  <h3 id="compressible-vof">8.2 CompressibleVoF</h3>
+  <p>The first successful run I made on my own was running my own geometry with all the same parameters as the “throttle” tutorial. See <a href="#fig-8-4">figure 8.4</a> for the geometry. This simulation ran from 0 to 1s using the compressibleVoF module with water and water vapor as the liquid and vapor phases. The inlet pressure is fixed at 100 psi, and the outlet is fixed at 14, or atmospheric pressure.</p>
+
+  <table class="compact">
+    <caption>Table 1: CompressibleVoF run stats</caption>
+    <tbody>
+      <tr><td>Start, Stop Time</td><td>0s, 1s</td></tr>
+      <tr><td>Turbulence</td><td>RAS</td></tr>
+      <tr><td>Phase Change</td><td>On</td></tr>
+      <tr><td>Adjustable time</td><td>off</td></tr>
+      <tr><td>Inlet</td><td>100 psi</td></tr>
+      <tr><td>Outlet</td><td>14 psi</td></tr>
+    </tbody>
+  </table>
+
+  <figure id="fig-8-4" class="small">
+    <img src="main/cav_test_geom.png" alt="CompressibleVoF run 1 geometry">
+    <figcaption>Figure 8.4: CompressibleVoF run 1 geometry.</figcaption>
+  </figure>
+
+  <figure id="fig-8-5">
+    <div class="row subfigures">
+      <figure>
+        <img src="main/cav_p_ocil_1.png" alt="Pressure field during oscillation, frame 1">
+        <figcaption>(a)</figcaption>
+      </figure>
+      <figure>
+        <img src="main/cav_p_ocil_2.png" alt="Pressure field during oscillation, frame 2">
+        <figcaption>(b)</figcaption>
+      </figure>
+      <figure>
+        <img src="main/cav_p_ocil_3.png" alt="Pressure field during oscillation, frame 3">
+        <figcaption>(c)</figcaption>
+      </figure>
+    </div>
+    <figcaption>Figure 8.5: CompressibleVoF run 1 pressure oscillation between 0.43 and 0.45s.</figcaption>
+  </figure>
+
+  <p>I noticed a significant pressure oscillation in the simulation that seems very nonphysical and lessens as the simulation goes on. While I do not know the exact cause, I hypothesize that the compressible part of the solver is attempting to solve for the sudden acceleration of the fluid since it is initialized at 0 velocity but the fixed outlet pressure is being enforced and pushing back on the accelerating fluid. See subsequent time steps in <a href="#fig-8-5">figure 8.5</a>. In retrospect, a ramped outlet pressure would have been a good choice here.</p>
+
+  <figure id="fig-8-6" class="medium">
+    <figure>
+      <img src="main/cav_test_t1.png" alt="First full run, velocity magnitude at t = 1 s">
+      <figcaption>(a) U</figcaption>
+    </figure>
+    <figure>
+      <img src="main/cav_test_alpha_t1.png" alt="First full run, vapor fraction at t = 1 s">
+      <figcaption>(b) alpha vapor</figcaption>
+    </figure>
+    <figcaption>Figure 8.6: First full run; U and alpha vapor at t = 1s.</figcaption>
+  </figure>
+
+  <p>After seeing this run I was a little concerned by the pocket or sheet of vapor that starts at the inlet and is entrained along the wall. From my COMSOL simulations I know that this kind of inlet causes a ventui shape at the inlet with low pressure just inside near the walls and pressure quickly recovering. This is not reflected in this run and I suspect that it has to do with the VoF aspect of the solver which favors regions of homogeneous phase due to the nature of the VoF method. Additionally my cell size is such that smaller bubbles than the ones seen at the end of the vapor pocket could not be resolved by more than one cell. Knowing what I know now (<a href="#appendix-a">Appendix A</a>), this is a reasonable result from a VoF simulation.</p>
+
+  <figure id="fig-8-7" class="medium">
+    <figure>
+      <img src="main/cav_test_2_U.png" alt="Continued run, velocity magnitude at t = 1.7 s">
+      <figcaption>(a) U</figcaption>
+    </figure>
+    <figure>
+      <img src="main/cav_test_2_alpha.png" alt="Continued run, vapor fraction at t = 1.7 s">
+      <figcaption>(b) alpha vapor</figcaption>
+    </figure>
+    <figcaption>Figure 8.7: Continued first full run; U and alpha vapor at t = 1.7s.</figcaption>
+  </figure>
+
+  <p>After these results, I ran another simulation that continued from 1 to 2 seconds as seen in <a href="#fig-8-7">figure 8.7</a>. These results show the sheet of vapor continuing to flow down the channel, entrained by the flow. While the length of the vapor bubble is surprising, I think of running my hand under the water, entraining air bubbles that stick to the back of my hand. I suppose that this might be an accurate result, however it is hard to say without empirical data.</p>
+  <p>Recognizing that this is not the kind of result that I will need for my Nitrous Oxide simulations, I decided to try and use the multiphase Euler solver.</p>
+
+  <h3 id="multiphase-euler">8.3 MultiphaseEuler</h3>
+  <p>Now that I switched to multiphaseEuler module, for the reasons detailed in <a href="#appendix-a">Appendix A</a> the process is much more complex and therefore requires much more troubleshooting. All property values I used for Nitrous Oxide can be found in <a href="#appendix-b">Appendix B</a>.</p>
+  <p>My first few runs ran into a persistent problem where the simulation would start but soon after starting would crash with an error related to phase change. On run four, I noticed some kind of artifact of what I assume is the meshing as seen by the sharp and irregular phase change at the outlet in the far left middle of <a href="#fig-8-8">figure 8.8a</a>.</p>
+
+  <figure id="fig-8-8">
+    <div class="row subfigures">
+      <figure>
+        <img src="main/sharp_phase_chage.png" alt="Sharp, irregular phase change at the outlet">
+        <figcaption>(a) alpha vapor</figcaption>
+      </figure>
+      <figure>
+        <img src="main/co_v5.png" alt="Courant number concentrated at the refined inlet">
+        <figcaption>(b) Courant number</figcaption>
+      </figure>
+    </div>
+    <figcaption>Figure 8.8</figcaption>
+  </figure>
+
+  <p>Thinking back to COMSOL, if I have persistent issues it can sometimes be caused by too coarse of a mesh therefore I majorly refined the mesh. But in run v5 the problem got even worse and the time step was getting very small. I then realized that refining the mesh in this case is actually detrimental because it requires that the solver to slow the time step way down to respect the max Courant number. In <a href="#fig-8-8">figure 8.8b</a>, at the inlet the Courant number is reaching the maximum values long before cells elsewhere because I had refined the mesh to such a degree in that area. The courant number is defined as \(\mathrm{Co} = \frac{u \Delta t}{\Delta x}\)</p>
+
+  <h3 id="runs-8-10">8.4 Run 8 - 10</h3>
+  <p>After facing so many instabilities and temperature blow-ups near startup I decided to just start the simulation as laminar, with no phase change, then resume as turbulent and phase change on. Additionally, I incorporated a linear ramp from equal to inlet pressure (600 psi) to 400 psi outlet pressure over five seconds. Even incorporating so many simplifications, the simulation still has a blow up in velocity as backflow through the outlet. I suspect that, as shown by the arrows in <a href="#fig-8-9">figure 8.9</a> middle image, the large outflow velocity causes high pressure locally at that part of the outlet, so the simulation induces a large low pressure above and below at the boundary (from the arrows) which allows flow back into the volume.</p>
+
+  <figure id="fig-8-9" class="small">
+    <figure>
+      <img src="main/v8_t198.png" alt="Run 8 liquid velocity at t = 1.98">
+    </figure>
+    <figure>
+      <img src="main/v8_t264.png" alt="Run 8 liquid velocity at t = 2.64, with arrows marking backflow at the outlet">
+    </figure>
+    <figure>
+      <img src="main/v8_t462.png" alt="Run 8 liquid velocity at t = 4.62">
+    </figure>
+    <figcaption>Figure 8.9: Run 8 at times t = 1.98, 2.64, 4.62.</figcaption>
+  </figure>
+
+  <h3 id="run-11">8.5 Run 11</h3>
+
+  <table class="compact">
+    <caption>Table 2: Run 11 Stats</caption>
+    <tbody>
+      <tr><td>Run Time</td><td>14.35 hr</td></tr>
+      <tr><td>Start, Stop Time</td><td>0s, 4.25s</td></tr>
+      <tr><td>Turbulence</td><td>RAS</td></tr>
+      <tr><td>Phase Change</td><td>Off</td></tr>
+      <tr><td>Num Mesh Cells</td><td>64,406</td></tr>
+      <tr><td>Max Co</td><td>0.1</td></tr>
+      <tr><td>Inlet</td><td>600 psi</td></tr>
+      <tr><td>Outlet</td><td>Ramp: 600 to 400 psi, 1s</td></tr>
+    </tbody>
+  </table>
+
+  <figure id="fig-8-10">
+    <img src="main/flashingFOAM_v11_mesh.png" alt="Run 11 mesh">
+    <figcaption>Figure 8.10: Run 11 mesh; throat size: 0.05.</figcaption>
+  </figure>
+
+  <p>I attempted to extend the outlet zone so that vortexes shed by the channel outlet can settle before exiting via the outlet. However, as seen in previous runs, the outlet gets some kind of terrible backflow causing massive velocities, as seen in <a href="#fig-8-11">figure 8.11</a>. The max velocity is nearly 490 m/s causing the time step to fall to 1.7e-18 to respect the max Co of 0.1.</p>
+
+  <figure id="fig-8-11">
+    <img src="main/flashingFOAM_V11_4s_visualization.png" alt="Run 11 velocity magnitude at t = 4 s">
+    <figcaption>Figure 8.11: Run 11: U at t = 4s</figcaption>
+  </figure>
+
+  <p>I suspect that this is in part due to not having the correct outlet conditions, but also due to not having enough space for the vortexes to diffuse. As seen in <a href="#fig-8-12">figure 8.12</a>, the vortex diffuses nicely until the vortex gets near the outlet. I think that the vorticity of the flow is causing/telling the outlet to backflow into the volume.</p>
+
+  <figure id="fig-8-12">
+    <div class="row subfigures">
+      <figure>
+        <img src="main/flashingFOAM_v11_votex_1.png" alt="Outlet startup vortex at t = 1.25">
+        <figcaption>(a) t = 1.25</figcaption>
+      </figure>
+      <figure>
+        <img src="main/flashingFOAM_v11_votex_2.png" alt="Outlet startup vortex at t = 1.5">
+        <figcaption>(b) t = 1.5</figcaption>
+      </figure>
+      <figure>
+        <img src="main/flashingFOAM_v11_votex_3.png" alt="Outlet startup vortex at t = 1.75">
+        <figcaption>(c) t = 1.75</figcaption>
+      </figure>
+    </div>
+    <figcaption>Figure 8.12: Diffusion of outlet startup vortex.</figcaption>
+  </figure>
+
+  <p>I actually have a lot of room to grow this mesh; here, I am only using about half of available compute. For the next run, I significantly increase the size of the outlet to allow the simulation to diffuse the turbulence before exiting the volume. Additionally, I am going to try to better prevent backflow through the use of boundary conditions.</p>
+
+  <h3 id="run-12">8.6 Run 12</h3>
+
+  <table class="compact">
+    <caption>Table 3: Run 12 summary</caption>
+    <tbody>
+      <tr><td>Run Time</td><td>6.6 hr</td></tr>
+      <tr><td>Start, Stop Time</td><td>0s, 5s</td></tr>
+      <tr><td>Turbulence</td><td>RAS</td></tr>
+      <tr><td>Phase Change</td><td>Off</td></tr>
+      <tr><td>Num Mesh Cells</td><td>221,993</td></tr>
+      <tr><td>Max Co</td><td>0.5</td></tr>
+      <tr><td>Inlet</td><td>600 psi</td></tr>
+      <tr><td>Outlet</td><td>Ramp: 600 to 400 psi, 1s</td></tr>
+    </tbody>
+  </table>
+
+  <p>This run I greatly increased the size of the outlet to allow for vortexes to diffuse before exiting as seen in <a href="#fig-8-13">figure 8.13</a>. Additionally, I changed the inlet to totalPressure boundary condition (B.C.) from fixedValue to better represent an upstream pressure reservoir. I left the outlet pressure B.C. the same but adjusted the outlet velocity B.C. from pressureInletOutletVelocity (velocity simply follows pressure gradient) to zeroGradient to hopefully avoid massive backflow.</p>
+
+  <figure id="fig-8-13" class="small">
+    <img src="main/flashingFOAM_v12_mesh.png" alt="Run 12 mesh with enlarged outlet region">
+    <figcaption>Figure 8.13: Run 12 mesh; throat size 0.05.</figcaption>
+  </figure>
+
+  <figure id="fig-8-14" class="small">
+    <figure>
+      <img src="main/run12_2_t225.png" alt="Run 12 liquid velocity at t = 2.25">
+    </figure>
+    <figure>
+      <img src="main/run12_2_t275.png" alt="Run 12 liquid velocity at t = 2.75">
+    </figure>
+    <figure>
+      <img src="main/run12_2_t325.png" alt="Run 12 liquid velocity at t = 3.25">
+    </figure>
+    <figcaption>Figure 8.14: Run 12 at times t = 2.25, 2.75, 3.25.</figcaption>
+  </figure>
+
+  <p>Results show that the outlet B.C. still did not prevent backflow and reinforced the, turbulence leading to backflow hypothesis, as seen in <a href="#fig-8-14">figure 8.14</a>. I think the biggest fix is to just move to outlet way downstream but will unfortunately increase computation time. As I learn more about boundary conditions I am realizing that I cannot just treat it as a boundary where the flow simply passes through without interacting, rather I must extend it so that flow can settle and turbulence can diffuse before passing through.</p>
+
+  <h3 id="run-13">8.7 Run 13</h3>
+
+  <table class="compact">
+    <caption>Table 4: Run 13 Summary</caption>
+    <tbody>
+      <tr><td>Run Time</td><td>N/A</td></tr>
+      <tr><td>Start, Stop Time</td><td>0s, 5s</td></tr>
+      <tr><td>Turbulence</td><td>RAS</td></tr>
+      <tr><td>Phase Change</td><td>Off</td></tr>
+      <tr><td>Num Mesh Cells</td><td>397,044</td></tr>
+      <tr><td>Max Co</td><td>0.5</td></tr>
+      <tr><td>Inlet</td><td>600 psi</td></tr>
+      <tr><td>Outlet</td><td>Ramp: 600 to 400 psi, 1s</td></tr>
+    </tbody>
+  </table>
+
+  <p>Rather than trying to force the B.C.s to copperate, I will attempt to work around the issue by modifying the mesh and setting the outlet B.C. to “totalPressure”, just like the inlet. In retrospect this is obviously the right thing to do because my flow velocity is so high the dynamic pressure can be quite low, causing an adverse pressure gradient at the outlet. An important caveat: the totalPressure B.C. is not exactly compatible with multiphase flows because it does not know how to compute velocity at the boundary and therefore must be specified as one or the other phase. Because I expect the flow to be all liquid at the inlet and nearly all vapor at the outlet, when I turn phase change back on, I will set the outlet to use the vapor values. For now I have set them to use the liquid values.</p>
+  <p>This run I have nearly doubled the outlet length as seen in <a href="#fig-8-15">figure 8.15</a>. It is clear that this mesh is very large so I increased mesh size after x=50 in an effort to keep the size manageable; the file was more than 6.5 times larger than the previous mesh, now it is only half that.</p>
+
+  <figure id="fig-8-15" class="small">
+    <img src="main/run_13_mesh.png" alt="Run 13 mesh">
+    <figcaption>Figure 8.15: Run 13 mesh.</figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ -->
+<section id="conclusion">
+  <h2>9. Concluding Remarks</h2>
+  <p>To summarize, I learned COMSOL completely from scratch and applied it to solve new problems (rocket engine thermal analysis, inlet flow effects). I not only discovered OpenFOAM but actually used it for useful work. I have learned so much about numerical solvers and the strategies involved in trying to mathematically simulate fluids.</p>
+  <p>Unfortunately I was unable to get really meaningful results from OpenFOAM in the last few weeks before the end of the quarter, however this project will continue on beyond this report. I am proud of myself for learning one and a half new tools (COMSOL and half of OpenFOAM) and am confident in my ability to tackle new challenges in both programs.</p>
+  <p>For next steps, I am going to continue running OpenFOAM simulations and debugging along the way. My objective remains the same: develop a generalizable model for flashing flow in any small geometry. This would be massively helpful for the rocket club in designing on components. However it is getting to the point where runs are routinely taking several to tens of hours to run, but it is inevitable at this level. While I have yet to start on the phase change aspect of this in OpenFOAM, I used this project as an opportunity to learn of/learn more about flashing flows, cavitation, and metastable states. The learning required to write this report also helped to fill in some knowledge gaps on the subjects.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="appendix-a">
+  <h2>A. Multiphase Modules in OpenFOAM-12</h2>
+  <p>It is worthwhile to make a comment about the multiphase modules in OpenFOAM-12. All available multiphase modules are:</p>
+  <ol>
+    <li>compressibleMultiphaseVoF</li>
+    <li>compressibleVoF</li>
+    <li>incompressibleDriftFlux</li>
+    <li>incompressibleMultiphaseVoF</li>
+    <li>incompressibleVoF</li>
+    <li>multiphaseEuler</li>
+  </ol>
+  <p>Any incompressible module is not relevant to the present study, so I will narrow to compressibleMultiphaseVoF, compressibleVoF, and multiphaseEuler. Aditionally, compressibleMultiphaseVoF is for multiple compressible, isothermal, immiscible fluids using VOF, while compressibleVoF is for just two. Therefore I will focus only on compressibleVoF and multiphaseEuler.</p>
+
+  <h3 id="appendix-a1">A.1 CompressibleVoF</h3>
+  <p>The primary distinction between the two modules is the lack or lacktherof VoF. The volume of fluid (VoF) method is simply the incorporation of a scalar field alpha, between 0 and 1, which tracks the phase fraction at each cell and the rate at which alpha changes is dictated by a source term that is determined from the cavitation model. Mixture properties are governed by a weighted average of the property using alpha.</p>
+  <p>The Schnerr-Sauer model, published by Schnerr and Sauer in 2001, is derived from bubble dynamics and applied to a population of spherical bubbles. The assumptions are:</p>
+  <ol>
+    <li>The liquid-vapor mixture consists of pure liquid containing a uniform number of spherical vapor bubbles per unit volume of liquid.</li>
+    <li>All bubbles in a cell have the same radius R at any given time.</li>
+    <li>Bubble growth and collapse are governed by a simplified Rayleigh equation (neglecting viscous, surface tension, and gas content effects).</li>
+    <li>The mixture is incompressible.</li>
+    <li>Thermal effects and non-condensable gas are neglected.</li>
+  </ol>
+  <p>Additionally, the Schnerr-Sauer model expresses the bubble radius as a function of local alpha and bubble number density. This model is particularly advantageous to use over other available models because it not only has less parameters, but also has none that require empirical tuning.</p>
+  <p>Bubble number density (n_0) is the single parameter in Schnerr-Sauer and represents the number of nucleation sites per unit volume of liquid. This parameter effects both bubble number density and bubble size since larger values of n_0 mean more nucleation sites, more bubble generation, and smaller bubbles. The model is quite stable; as alpha approaches 1 (fully liquid) the evaporation source term goes to zero, and as alpha approaches 0 (fully vapor), the condensation source term goes to zero.</p>
+  <p>An important aspect of how both modules work is the PIMPLE algorithm, a combination of the Pressure Implicit with Splitting of Operators (PISO) and Semi-Implicit Method for Pressure-Linked Equations (SIMPLE) algorithms. PIMPLE is used for transient simulations that have large time steps or complicated coupling between pressure and velocity. For compressibleVoF, it proceedes as follows:</p>
+  <ol>
+    <li>Compute cavitation source terms</li>
+    <li>Volume fraction updated</li>
+    <li>Mixture properties updated</li>
+    <li>Momentum equation solved for intermediate velocity field</li>
+    <li>Pressure equation is solved</li>
+    <li>Velocity updated using pressure</li>
+    <li>four - six repeated n times</li>
+    <li>entire loop is repeated j times using already solved for values</li>
+  </ol>
+  <p>The the number n is usually three, and j is set greater than one only for cases where cavitation effects are strong. These j correction loops increase accuracy greatly, at the expense of computation time.</p>
+
+  <h3 id="appendix-a2">A.2 MultiphaseEuler</h3>
+  <p>As the name implies, this module takes a Euler approach of tracking flow fields for each phase separately rather than tracking individual bubbles. The key step trick in this solver is the application of a phase fraction dependent averaging term to the equations, however this introduces a need for interfacial exchange terms. This added complexity makes multiphaseEuler good for resolving large flow fields of both phases, but can cause new issues.</p>
+  <p>PIMPLE is notably different from the compressibleVoF module the PIMPLE algorithm and proceeds as follows:</p>
+  <ol>
+    <li>Phase fraction prediction is done using continuity and source terms using MULES</li>
+    <li>Per-phase enthalpy is predicted and used for temperature and other material property updates</li>
+    <li>Momentum equations solved for each phase</li>
+    <li>Pressure equations solved for each phase</li>
+    <li>Velocity updated using pressure</li>
+    <li>three - five repeated n times</li>
+    <li>Entire loop is repeated j times using found values</li>
+    <li>All properties are post processed</li>
+  </ol>
+  <p>Where n and j are in the PIMPLE inner and outer corrects, respectively.</p>
+  <p>The multiphaseEuler solver was originally introduced by Kent E. Wardle and Henry G. Weller in 2013. It was originally made for use in designing liquid-liquid separation devices. The governing equations for mass and momentum conversation for each phase \(\kappa\) are:</p>
+  \[
+  \frac{\partial \alpha_k}{\partial t}
+  + \vec{u}_k \cdot \nabla \alpha_k = 0,
+  \]
+  \[
+  \frac{\partial \left( \rho_k \alpha_k \vec{u}_k \right)}{\partial t}
+  + \left( \rho_k \alpha_k \vec{u}_k \cdot \nabla \right)\vec{u}_k
+  = -\alpha_k \nabla p
+  + \nabla \cdot \left( \mu_k \alpha_k \nabla \vec{u}_k \right)
+  + \rho_k \alpha_k \vec{g}
+  + \vec{F}_{D,k}
+  + \vec{F}_{s,k}.
+  \]
+  <p>where the density, phase fraction, and velocity for phase \(\kappa\) are given by \(\rho_\kappa\), \(\alpha_\kappa\), and \(u_\kappa\), respectively. \(\vec{F}_{D,k}\) is the inter-phase drag and \(\vec{F}_{s,k}\) is the surface tension.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="appendix-b">
+  <h2>B. N<sub>2</sub>O Properties</h2>
+  <p>An important aspect of these simulations is simulating Nitrous Oxide. To do this I wrote a small Python script that uses the CoolProp package to get saturation temperature of nitrous oxide at pressures from one to 1000 psi at intervals of two psi. I then use the “table” function to linearly interpolate for any saturation temp in the phaseProperties dict file. For other common values such as density, Cp, and Cv I used CoolProp, but more niche values such as thermal diffusivity of gaseous Nitrous Oxide, I had to use AI to make educated guesses of the values.</p>
+
+  <table>
+    <caption>Table 5: Liquid and vapor nitrous oxide properties used.</caption>
+    <thead>
+      <tr><th>Property</th><th>Liquid</th><th>Vapor</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Bubble Diameter, \(d\)</td><td>–</td><td>\(1.0\times10^{-6}\) m</td></tr>
+      <tr><td>Residual volume fraction, \(\alpha_\mathrm{res}\)</td><td>\(1.0\times10^{-6}\)</td><td>\(1.0\times10^{-6}\)</td></tr>
+      <tr><td>Equation of state</td><td>rhoConst</td><td>perfectGas</td></tr>
+      <tr><td>Molecular weight, \(M\)</td><td>44.0128 kg/kmol</td><td>44.0128 kg/kmol</td></tr>
+      <tr><td>Density, \(\rho\)</td><td>907.0664442 kg/m<sup>3</sup></td><td>perfect gas</td></tr>
+      <tr><td>Heat of formation, \(h_f\)</td><td>65800 J/kg</td><td>82050 J/kg</td></tr>
+      <tr><td>Specific heat, \(C_p\)</td><td>2272.73536511 J/(kg K)</td><td>1716.0015267 J/(kg K)</td></tr>
+      <tr><td>Specific heat, \(C_v\)</td><td>911.168716225 J/(kg K)</td><td>877.971231609 J/(kg K)</td></tr>
+      <tr><td>Reference temperature, \(T_\mathrm{ref}\)</td><td>273.15 K</td><td>273.15 K</td></tr>
+      <tr><td>Reference sensible enthalpy, \(h_{s,\mathrm{ref}}\)</td><td>165568.915966 J/kg</td><td>398248.660362 J/kg</td></tr>
+      <tr><td>Reference sensible internal energy, \(e_{s,\mathrm{ref}}\)</td><td>162126.961363 J/kg</td><td>361591.930621 J/kg</td></tr>
+      <tr><td>Dynamic viscosity, \(\mu\)</td><td>\(1.4\times10^{-5}\) Pa s</td><td>\(1.7\times10^{-4}\) Pa s</td></tr>
+      <tr><td>Prandtl number, Pr</td><td>0.85</td><td>2.5</td></tr>
+      <tr><td>Surface tension, \(\sigma\)</td><td>0.00538032056701 N/m</td><td>–</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ============================================================ -->
+<section id="references">
+  <h2>References</h2>
+  <ol>
+    <li>H. Soyama, J. Hoshino; Enhancing the aggressive intensity of hydrodynamic cavitation through a Venturi tube by increasing the pressure in the region where the bubbles collapse. AIP Advances 1 April 2016; 6 (4): 045113. <a href="https://doi.org/10.1063/1.4947572">https://doi.org/10.1063/1.4947572</a></li>
+    <li>Waxman, Benjamin S. An investigation of injectors for use with high vapor pressure propellants with applications to hybrid rockets. Stanford University, 2014.</li>
+    <li>Yin, Songtao, et al. “Critical flow leakage of a vapour-liquid mixture from sub-cooled water: Nucleation boiling study.” International Journal of Heat and Mass Transfer 146 (2020): 118807.</li>
+    <li>Schnerr, G. H., &amp; Sauer, J. (2001). Physical and numerical modeling of unsteady cavitation dynamics. In ICMF-2001, 4th International Conference on Multiphase Flow, New Orleans, USA, May 27–June 1, 2001.</li>
+    <li>Guide, Programmer’S. “OpenFOAM.” no. June (2020).</li>
+    <li>Zimmerman, W. B. J. “Introduction to COMSOL multiphysics.” Multiphysics modeling with finite element methods. 2006. 1-26.</li>
+    <li>Wardle, Kent E., Weller, Henry G., Hybrid Multiphase CFD Solver for Coupled Dispersed/Segregated Flows in Liquid-Liquid Extraction, International Journal of Chemical Engineering, 2013, 128936, 13 pages, 2013. <a href="https://doi.org/10.1155/2013/128936">https://doi.org/10.1155/2013/128936</a></li>
+  </ol>
+</section>
+
+</body>
+</html>
