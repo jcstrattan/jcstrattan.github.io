@@ -6,6 +6,7 @@ body {
   max-width: 820px;
   margin: 0 auto;
   padding: 2rem 1rem 4rem;
+  overflow-wrap: break-word;
 }
 
 header {
@@ -50,6 +51,7 @@ nav.tabs {
 nav.tabs a {
   color: #555;
   text-decoration: none;
+  white-space: nowrap;
   padding: 0.5rem 0;
   margin-bottom: -1px;
   border-bottom: 2px solid transparent;
@@ -119,6 +121,12 @@ h4 {
 
 a {
   color: #1a4fbf;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 2rem 0;
 }
 
 code {
@@ -216,11 +224,21 @@ td.group {
 }
 
 mjx-container[display="true"] {
+  min-width: 0 !important;
   overflow-x: auto;
   overflow-y: hidden;
 }
 
 @media (max-width: 600px) {
+  nav.tabs {
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  nav.tabs a {
+    font-size: 0.95rem;
+  }
+
   .row {
     flex-direction: column;
   }

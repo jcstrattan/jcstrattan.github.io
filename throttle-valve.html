@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Casey Strattan – Throttle Valve Design</title>
+  <link rel="stylesheet" href="style.css">
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-chtml.js"></script>
+</head>
+<body>
+
+<nav class="tabs">
+  <a href="index.html">Portfolio</a>
+  <a href="multiphase-cfd.html">Multiphase CFD</a>
+  <a href="throttle-valve.html" aria-current="page">Throttle Valve</a>
+</nav>
+
+<header>
+  <h1>Throttle Valve Selection and Design</h1>
+  <p>Halo VTVL — Gaucho Rocket Project, UC Santa Barbara</p>
+  <p>John Casey Strattan, Ian Cartwright</p>
+  <p>Spring 2026</p>
+  <p><a href="main/cav-venturi-section-design-doc.pdf">Download PDF</a></p>
+</header>
+
+<nav>
+  <h2>Contents</h2>
+  <ul class="toc">
+    <li>
+      <details>
+        <summary><a href="#throttle-valve">1. Throttle Valve Selection and Design</a></summary>
+        <ul>
+          <li><a href="#throttling-requirements">1.1 Throttling Requirements for Pressure-Fed Liquid Rocket Engines</a></li>
+          <li><a href="#throttle-evaluation">1.2 Evaluation of Throttling Methods</a></li>
+          <li><a href="#vacv-principle">1.3 VACV Operating Principle</a></li>
+          <li><a href="#geometric-design">1.4 Geometric Design Methodology</a></li>
+          <li><a href="#mechanical-implementation">1.5 Mechanical Implementation</a></li>
+          <li><a href="#independent-throttling">1.6 Independent Propellant Throttling Architecture</a></li>
+          <li><a href="#verification">1.7 Verification Requirements</a></li>
+          <li><a href="#sensor-rigidity">1.8 Sensor Rigidity</a></li>
+        </ul>
+      </details>
+    </li>
+    <li><a href="#references">References</a></li>
+  </ul>
+</nav>
+
+<!-- ============================================================ -->
+<section id="throttle-valve">
+  <h2>1. Throttle Valve Selection and Design</h2>
+  <p>This section presents the rationale for selecting a variable-area cavitating venturi (VACV) as the primary throttling element in the propellant feed system. The discussion begins with the functional requirements that any throttling approach must satisfy, then evaluates candidate methods against these requirements, and concludes with the geometric design methodology used to size the VACV for the target flow characteristics.</p>
+
+  <h3 id="throttling-requirements">1.1 Throttling Requirements for Pressure-Fed Liquid Rocket Engines</h3>
+  <p>In order to create a VTVL in the first place a throttling element must be created, to change the thrust level. In a pressure-fed liquid rocket engine feed system such as our own, we must satisfy several interrelated requirements that collectively ensure stable, predictable engine operation across the desired thrust range, to achive this task. First and foremost, the relationship between actuator command and resulting mass flow rate must be monotonic and most importantly repeatable with a specific calibration point set, the control system must be able to command a specific flow rate and receive a predictable response, and both tasks must occur within a single firing and across multiple test campaigns. Additionally, the more linear the command is the better, as it will be easier to control accurately. Any hysteresis, stiction, or position-dependent behavior in the throttle mechanism directly degrades the exprected closed-loop control performance by introducing faults such as dead bands and/or unpredictable transients, which can be associated with common COTS valves such as globe valves.</p>
+  <p>An equally important consideration is for the valve to withstand downstream disturbances coming from the engine. This is because, combustion chambers exhibit pressure oscillations from varying acoustic modes, injection and ignition dynamics/startup, and combustion instabilities which are still unknown to us in this part of the design phase. Using a rudimentary understanding, it can be read about that combustion instabilities, result in an unsteady heat release coupled with acoustic waves, which can create large amplitude pressure oscillations if in phase, described by the Rayleigh Criterion for thermoacoustic pressure waves <a href="https://cefrc.princeton.edu/sites/g/files/toruqf1071/files/Files/2015%20Lecture%20Notes/Poinsot/7b-Theory-for-Instabilities.pdf">Princeton</a>. This self-excited feedback loop leads to intense vibrations which can loosen parts or excite resonance in components, reduce operating efficiency, and result in sensitive hardware failure, which is why the engine dynamics need to be isolated from the upstream components to ensure stable operation.</p>
+  <p>If a throttle element is strongly coupled to downstream pressure it will transmit all of these disturbances back into the feed system, which can potentially amplify instabilities rather than isolating them. Thus we need a solution that can be defined as the ideal throttle, which should act as a flow regulator by setting the mass flow based on upstream conditions and actuator position, while enforcing the condition of minimal operational sensitivity to what happens downstream in the combustion chamber.</p>
+  <p>For a bipropellant engine such as the one we plan to use for our VTVL, the mixture ratio control presents an additional requirement, which is why we simply cannot use simply a venturi placed in series with any COTS valve. The oxidizer and fuel flows must be controllable either independently or through a well-characterized linkage between the two that maintains the desired ratio across the throttle profile. Independent control is strongly preferred for this case since we do not know the exact operating conditions or sensitivities as of yet. This independent control allow for real-time compensation for off-nominal behavior, which results in us having more testing flexbility, and allows for us to experimentally iterate faster. And to expand further on this, the last point deserves particular emphasis for the present theoretical design. At this stage of development, the engine operating envelope is defined entirely by analytical predictions and empirical correlations from graduate papers/thesis', which means that the amount of uncertainty is increased and the repeatability of these experiments is unknown. Additionally, the exact chamber pressure, injector pressure drop, propellant flow rates, and combustion efficiency have not been experimentally validated, and only a modest reference has been assigned to each. This uncertainty places a premium on throttling approaches that provide inherent flexibility, since the ability to adjust oxidizer and fuel flows independently of the many variables that we have so far identified, means the control system can compensate for prediction errors without requiring extensive hardware modifications, if any. Additionally, if we were to select a throttle architecture that mechanically couples the two propellant flows, such as a variable-area pintle injector, that is on a coaxially linked stroke would lock the mixture ratio to a predetermined geometric relationship, eliminating this critical compensation capability, or be only to control the relative O/F ratio assuming that only the oxidizer could be controlled which, will complicate the use of a regenerative engine since the combustion temperature will change with throttle level.</p>
+
+  <h3 id="throttle-evaluation">1.2 Evaluation of Throttling Methods</h3>
+  <p>Several throttling approaches have been employed or proposed for liquid rocket engines with alot of the options coming from prior choices or other collegiate teams/graduate projects, each with distinct characteristics that make them suitable for different applications. <a href="#table-1">Table 1</a> summarizes the primary candidates considered for this system, along with an assesment of each for this purpose.</p>
+  <p>The variable-area cavitating venturi emerges as the preferred throttling element because it is the only option that satisfies the combination of requirements established. Its downstream-pressure insensitivity provides the flow regulation needed to isolate the feed system from combustion disturbances ensuring reliability, while its continuous pintle stroke offers the monotonic, repeatable control law needed for our sensitive closed-loop operation. Additionally, by implementing a separate VACVs on each propellant line, the fluid system can successfully preserve the mixture ratio authority needed to accommodate for the uncertainty generated in our preliminary system which is inherent in a system that has not yet been hot-fire tested/cold flow tested.</p>
+
+  <table id="table-1">
+    <caption>Table 1: Comparison of Throttling Methods for Pressure-Fed Liquid Rocket Engines</caption>
+    <colgroup>
+      <col style="width: 24%;">
+      <col>
+    </colgroup>
+    <thead>
+      <tr><th>Method</th><th>Assessment</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Variable-Area Cavitating Venturi (VACV)</strong></td><td>When operated in the cavitating regime, provides downstream-pressure insensitivity that isolates propellant flow from chamber disturbances. Offers continuous, geometry-based control through pintle stroke with a predictable and monotonic response. Separate VACVs on each propellant line enable independent mixture ratio control. Primary concerns are the requirement for sufficient upstream pressure to maintain cavitation, the irreversible pressure loss inherent to the design, and potential erosion from cavitation that must be addressed through material selection and surface finish. <em>Selected for this application.</em></td></tr>
+      <tr><td><strong>Servo Ball or Butterfly Valve</strong></td><td>Widely available and offers low pressure drop at full-open conditions, but exhibits a highly nonlinear flow coefficient characteristic—particularly the “quick-opening” behavior near small valve angles that makes fine throttling control difficult. These valves are also susceptible to flow-induced torque on the closure element and commonly exhibit stiction and hysteresis at intermediate positions. The flow remains fully coupled to downstream pressure, providing no regulation benefit.</td></tr>
+      <tr><td><strong>Needle or Globe Valve</strong></td><td>Designed specifically for throttling service and offers a smoother flow characteristic than rotary valves. However, the small internal clearances are sensitive to particulate contamination and can exhibit unstable behavior when two-phase flashing occurs in the throttling passages. Like ball valves, needle valves remain downstream-pressure coupled and do not provide flow regulation.</td></tr>
+      <tr><td><strong>Feed Pressure Variation</strong></td><td>Conceptually simple—throttling is achieved by varying the tank or regulator setpoint pressure. However, for a pressure-fed system, the feed pressure is already constrained by tank structural limits and pressurant system capacity. Varying feed pressure couples strongly into mixture ratio (since oxidizer and fuel feed systems respond differently), injector pressure drop, and potentially combustion stability. Dynamic throttling would require heavy, high-bandwidth regulation hardware.</td></tr>
+      <tr><td><strong>PWM Solenoid Pulsing</strong></td><td>Uses inexpensive on/off valves with average flow controlled by duty cycle. The discrete pulsing nature can excite feed system acoustics and combustion chamber modes, leading to instabilities. Effective flow resolution is limited, valve wear is accelerated by continuous cycling, and achieving repeatable mass flow with two-phase propellants requires extensive characterization.</td></tr>
+      <tr><td><strong>Variable-Area Pintle Injector</strong></td><td>Has excellent deep-throttle heritage, most notably the Apollo Lunar Module descent engine, and offers the advantage of coupling throttling with atomization optimization. However, implementing pintle throttling would require a complete injector redesign as the primary throttle element, introducing significant integration risk. Most critically, a pintle injector mechanically couples the oxidizer and fuel flows through fixed geometry, eliminating the ability to independently adjust mixture ratio and compensate for prediction errors.</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="vacv-principle">1.3 VACV Operating Principle</h3>
+  <p>A cavitating venturi exploits the fundamental relationship between flow velocity and static pressure in a converging passage. As liquid accelerates through the throat, conservation of energy requires that static pressure decrease. When the throat pressure drops to the vapor pressure of the fluid, cavitation initiates—vapor bubbles form in the low-pressure region and collapse as pressure recovers downstream. In this cavitating regime, the throat becomes effectively “choked”: the mass flow rate is governed by upstream pressure and throat geometry, with minimal dependence on downstream conditions.</p>
+  <p>The mass flow rate through a cavitating venturi can be expressed as:</p>
+  <div id="eq-1">
+  \[
+  \dot{m} = C_d A_t \sqrt{2 \rho (P_1 - P_v)} \tag{1}
+  \]
+  </div>
+  <p>where \(C_d\) is the discharge coefficient, \(A_t\) is the throat area, \(\rho\) is the upstream liquid density, \(P_1\) is the upstream pressure, and \(P_v\) is the fluid vapor pressure. The key observation is that downstream pressure does not appear in this expression—once cavitation is established, the flow rate depends only on upstream conditions and geometry.</p>
+  <p>A variable-area cavitating venturi extends this principle by introducing a movable pintle element positioned concentrically within the venturi throat, as illustrated in <a href="#fig-6">Figure 6</a>. Axial translation of the pintle changes the annular flow area between the pintle surface and the throat wall. At zero stroke (\(h = 0\)), the pintle fully occludes the throat and no flow passes. As the pintle retracts, the annular area increases and flow rate rises according to <a href="#eq-1">Equation (1)</a> with \(A_t\) replaced by the effective annular area \(A_{\text{eff}}(h)\).</p>
+
+  <figure id="fig-1" class="small">
+    <img src="main/Throttle%20Diagram.png" alt="Variable-area cavitating venturi geometry with pintle stroke h, throat diameter, and pintle angle labeled">
+    <figcaption>Figure 1: Variable-area cavitating venturi geometry. The pintle stroke \(h\) is measured from the fully-closed position, \(d_t\) is the throat diameter, and \(\theta\) is the pintle full angle. Axial translation of the pintle modulates the annular flow area.</figcaption>
+  </figure>
+
+  <p>This combination of cavitating flow physics and variable geometry produces a throttle with exactly the characteristics needed for rocket engine control: the mass flow responds predictably to pintle position while remaining insensitive to the combustion chamber pressure fluctuations occurring downstream.</p>
+
+  <h3 id="geometric-design">1.4 Geometric Design Methodology</h3>
+  <p>The VACV geometry was developed following the analytical framework established in the published literature on cavitating venturi throttles. The primary reference was the work of Tian et al. (2014), which provides the mathematical relationships between pintle geometry, stroke position, and mass flow rate <a href="#ref-1">[1]</a>. Additional validation data and practical design guidance were drawn from the thesis of Gümüşel (2020), who performed both numerical simulations and experimental testing of several venturi geometries <a href="#ref-2">[2]</a>.</p>
+  <p>From Tian et al., the effective flow area through a VACV with a conical pintle is determined by the throat diameter \(d_t\) and the pintle profile at the throat plane. For a pintle with half-angle \(\alpha\) (where the full angle is \(\theta = 2\alpha\)), the pintle radius at axial distance \(x\) from the tip is simply \(r(x) = x \tan\alpha\). The annular flow area at stroke position \(h\) is then:</p>
+  \[
+  A_{\text{eff}}(h) = \pi \left[ \left(\frac{d_t}{2}\right)^2 - r_{\text{pintle}}^2(h) \right] \tag{2}
+  \]
+  <p>Substituting into the cavitating flow equation yields the mass flow as a function of stroke:</p>
+  \[
+  \dot{m}(h) = C_d \cdot A_{\text{eff}}(h) \cdot \sqrt{2 \rho (P_1 - P_v)} \tag{3}
+  \]
+  <p>The two primary design parameters are the throat diameter \(d_t\) and the pintle full angle \(\theta\). The throat diameter sets the overall scale of the flow capacity—increasing \(d_t\) raises the maximum achievable mass flow rate. The pintle angle controls the shape of the stroke–flow characteristic curve.</p>
+  <p>Using Equations 9–13 from Tian et al., a parametric model was implemented in Desmos to allow interactive exploration of the design space. <a href="#fig-5">Figure 5</a> shows a representative characteristic curve with pintle stroke on the horizontal axis and mass flow rate on the vertical axis. The relationship is parabolic, with the physically meaningful operating region extending from \(h = 0\) (valve closed) to the vertex of the parabola (maximum flow, pintle fully retracted from throat). Values beyond the vertex are non-physical—they would imply that retracting the pintle further somehow reduces flow, which cannot occur once the pintle has cleared the throat entirely.</p>
+
+  <figure id="fig-2" class="small">
+    <img src="main/stoke%20vs.%20mass%20flow.png" alt="Desmos plot of mass flow rate versus pintle stroke with a linear approximation">
+    <figcaption>Figure 2: VACV characteristic curve from the Desmos parametric model. The parabolic relationship between stroke and mass flow becomes approximately linear (green line) over the operating range when a small pintle angle is selected.</figcaption>
+  </figure>
+
+  <p>A key insight from the parametric study is that the pintle angle profoundly affects the curvature of the characteristic. As \(\theta\) decreases, the parabola stretches horizontally—the stroke required to fully open the valve increases, and the curve becomes increasingly linear over the practical operating range. This near-linear behavior is operationally valuable because it simplifies the control problem: to command a target mass flow rate, the control system can interpolate linearly between calibrated endpoints rather than requiring a nonlinear lookup table or polynomial inversion. The green line in <a href="#fig-5">Figure 5</a> illustrates this linear approximation.</p>
+  <p>For the final design, a pintle full angle of \(\theta = 10^\circ\) was selected as a compromise between linearity (favoring smaller angles) and stroke sensitivity (favoring larger angles to avoid requiring excessive actuator travel for fine flow adjustments). The throat diameter of \(d_t = 5.0\) mm was chosen to provide the required flow capacity at the design upstream pressure. <a href="#table-2">Table 2</a> summarizes the complete geometric specification.</p>
+
+  <table id="table-2" class="compact">
+    <caption>Table 2: VACV Geometric Parameters</caption>
+    <thead>
+      <tr><th>Parameter</th><th>Symbol</th><th>Value</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Throat diameter</td><td>\(d_t\)</td><td>5.0 mm</td></tr>
+      <tr><td>Pintle full angle</td><td>\(\theta\)</td><td>10°</td></tr>
+      <tr><td>Pintle half-angle</td><td>\(\alpha\)</td><td>5°</td></tr>
+      <tr><td>Pintle tip radius</td><td>\(R_s\)</td><td>0.826 mm</td></tr>
+      <tr><td>Maximum stroke</td><td>\(h_{\text{max}}\)</td><td>19.0 mm</td></tr>
+      <tr><td>Discharge coefficient (estimated)</td><td>\(C_d\)</td><td>0.95</td></tr>
+    </tbody>
+  </table>
+
+  <h3 id="mechanical-implementation">1.5 Mechanical Implementation</h3>
+  <p>The semi-final VACV mechanical design is shown in <a href="#fig-7">Figure 7</a>. The pintle is guided by bearing surfaces upstream and downstream of the throat to maintain concentricity throughout the stroke range. Static sealing is provided at the pintle shaft penetration, and the venturi throat is implemented as a replaceable insert to facilitate material optimization and allow for wear replacement if cavitation erosion proves significant during testing.</p>
+
+  <figure id="fig-3">
+    <img src="main/Venturi%20Cutaway%20Figure.png" alt="Cross-section of the VACV showing the pintle, throat insert, housing, and seals">
+    <figcaption>Figure 3: VACV mechanical design cross-section showing the pintle, throat insert, housing, and sealing features.</figcaption>
+  </figure>
+
+  <p>Finite element analysis was performed on the seal plate, which carries the full upstream pressure load. As shown in <a href="#fig-8">Figure 8</a>, the maximum von Mises stress is 36 MPa, well within the allowable stress for the selected material and providing adequate margin for fatigue and stress concentration effects.</p>
+
+  <figure id="fig-4" class="small">
+    <img src="main/Venturi%20Seal%20Plate%20FEA.png" alt="Finite element stress results on the VACV seal plate">
+    <figcaption>Figure 4: Finite element analysis of the VACV seal plate under operating pressure. Maximum von Mises stress is 36 MPa.</figcaption>
+  </figure>
+
+  <h3 id="independent-throttling">1.6 Independent Propellant Throttling Architecture</h3>
+  <p>A defining feature of the selected feed system architecture is the use of separate, independently-controlled VACVs on the oxidizer and fuel lines rather than a single throttle point or mechanically-linked pair. This configuration directly addresses the requirement for mixture ratio authority in the face of theoretical uncertainty.</p>
+  <p>With independent throttle commands \(h_{\text{ox}}\) and \(h_f\), the mixture ratio becomes a controllable parameter:</p>
+  \[
+  \text{MR} = \frac{\dot{m}_{\text{ox}}(h_{\text{ox}})}{\dot{m}_f(h_f)} \tag{4}
+  \]
+  <p>If hot-fire testing reveals that the actual chamber pressure differs from predictions, the control system can adjust both throttles to achieve the target thrust while maintaining the desired mixture ratio. If the injector pressure drops differ from the design values, the throttle positions can compensate to restore the intended flow split. If propellant properties vary from batch to batch or with temperature, the independent throttles provide the degrees of freedom needed to maintain consistent engine performance.</p>
+  <p>This flexibility comes at the cost of requiring two actuators and a more sophisticated control algorithm, but the benefit is substantial: the system can adapt to reality rather than being constrained by the assumptions embedded in a fixed mechanical design. For a development engine where the predictions have not yet been validated, this adaptability is essential.</p>
+  <p>Additionally, locating the throttling function in dedicated feed system elements allows the injector to be designed and optimized solely for atomization and mixing at a fixed operating point. This separation of concerns simplifies both the injector design process and the test campaign, since the injector and throttle characteristics can be validated independently before integration.</p>
+
+  <h3 id="verification">1.7 Verification Requirements</h3>
+  <p>Before integration into the propulsion system, the VACV design must be verified through a series of characterization tests. Cold-flow testing with the actual propellants (or suitable simulants) is required to establish the true \(h \rightarrow \dot{m}\) mapping at representative upstream conditions, as the theoretical discharge coefficient of \(C_d = 0.95\) is an estimate that must be experimentally validated. These tests will also confirm that stable cavitation is achieved across the intended operating envelope and that the flow characteristic remains insensitive to downstream pressure variations.</p>
+  <p>Erosion assessment is particularly important for a cavitating device. The collapse of vapor bubbles generates intense local stresses that can damage surfaces over time. Extended-duration cold-flow testing followed by detailed inspection will establish whether the selected materials and surface finishes provide adequate erosion resistance for the intended service life.</p>
+  <p>Finally, hysteresis and repeatability testing across multiple stroke cycles will verify that the throttle behavior remains consistent and that the control system assumptions regarding monotonic response and minimal dead band are valid in practice.</p>
+
+  <hr>
+
+  <p>We started by finding papers that discussed similar throttling valves to the one we had in mind. The most useful was the paper by <a href="https://www.sciencedirect.com/science/article/abs/pii/S0955598614000582?via%3Dihub">Hui Tian et al., 2014</a> that walks through the math for the geometry. Another notable mention is the thesis by <a href="https://etd.lib.metu.edu.tr/upload/12625167/index.pdf">Hasan Tolga Gümüşel, 2020</a>, who designed and tested several venturi geometries both numerically and experimentally.</p>
+  <p>From Hui Tian et al. and equations 9, 10, 11, 12, and 13, we were able to make this <a href="https://www.desmos.com/calculator/19i5jsjqjf">Desmos</a> plot that helped us manipulate the possible geometries. On the x-axis we plot pintle stroke, and on the y-axis we plot the mass flow rate, as seen in <a href="#fig-5">figure 5</a>. As seen in <a href="#fig-6">figure 6</a>, h is the stroke of the pintle, where \(h=0\) means completely closed. The key parameters to adjust are the pintle full angle (\(\theta\)) and the throat diameter (\(d_{t}\)). The shape of the graph is a parabola, however any values after the vertex can be discarded due to the physical impossibility of mass flow rate decreasing after the pintle has been competently removed from the throat. Changing \(\theta\) changes the non-zero x-intercept, where decreasing values of \(\theta\) lead to increasing values of the intercept. Changing \(d_{t}\) changes the location of the vertex, where increasing values lead to increased mass flow. The key point is that, at small values of \(\theta\), the parabola stretches such that, locally, it is nearly linear, implying that the mass flow varies nearly linearly with stroke. This is fantastic because it means that, to target some mass flow, we only need to interpolate linearly between the limits of the pintle stroke. In <a href="#fig-5">figure 5</a>, see the green line that approximates the mass flow.</p>
+
+  <figure id="fig-5" class="small">
+    <img src="main/stoke%20vs.%20mass%20flow.png" alt="Desmos plot of mass flow rate versus pintle stroke">
+    <figcaption>Figure 5: Pintle stroke (h) x-axis, mass flow y-axis</figcaption>
+  </figure>
+
+  <figure id="fig-6" class="small">
+    <img src="main/Throttle%20Diagram.png" alt="Variable area venturi geometry diagram">
+    <figcaption>Figure 6: Variable Area Venturi Geometry</figcaption>
+  </figure>
+
+  <p>Semi final geometry is pictured in <a href="#fig-7">figure 7</a>. FEA for the seal plate is pictured in <a href="#fig-8">figure 8</a> with max stress of 36 MPa.</p>
+
+  <figure id="fig-7">
+    <img src="main/Venturi%20Cutaway%20Figure.png" alt="Cross-section of the modeled variable area venturi">
+    <figcaption>Figure 7: Variable Area Venturi Geometry Modeled</figcaption>
+  </figure>
+
+  <figure id="fig-8" class="small">
+    <img src="main/Venturi%20Seal%20Plate%20FEA.png" alt="Finite element stress results on the seal plate">
+    <figcaption>Figure 8: Variable Area Venturi Geometry Modeled</figcaption>
+  </figure>
+
+  <h3 id="sensor-rigidity">1.8 Sensor Rigidity</h3>
+  <p>When internal pressure acts on a threaded plug or fitting, the net axial “push-out” load is given by pressure times the <em>projected area</em> that the pressure can “see”:</p>
+  \[
+  F_P = P\,A_{\mathrm{proj}}. \tag{5}
+  \]
+  <p>For the case of interest here, there was concern about whether the selected 1/8 NPT fittings for pressure transducers and thermocouples would have enough thread engagement to successfully withstand the internal fluid pressure and prevent push-out, particularly since these fittings seal the fluids inside of the valves. Thus it was determined to calculate a factor of safety to assess how well the threads could stay secured in the aluminum body, where the bottom of the NPT port is fully exposed to the pressurant (i.e., the region below the engaged threads is effectively a through-hole).</p>
+  <p>For this given through-hole geometry, the appropriate projected area is the bore/opening area (piston-area model) since at its tapered thread flanks, it comes with contact against the aluminum. Thus this is the only point of contact holding it in place from axial forces, which justified why a push-out bore estimate is an appropriate representation for the axial pressure-ejection load:</p>
+  \[
+  A_{\mathrm{proj}} = A_{\mathrm{bore}} = \frac{\pi}{4}\,d_{\mathrm{bore}}^{2},
+  \qquad
+  F_P = P\left(\frac{\pi}{4}\,d_{\mathrm{bore}}^{2}\right). \tag{6}
+  \]
+  <p>To compare this axial load against thread stripping, which is the method of failure that we are concerned with, an engineering first-order model for the effective stripping shear area is used:</p>
+  \[
+  A_s \approx \frac{1}{2}\,\pi\,d_p\,L_e, \tag{7}
+  \]
+  <p>where \(d_p\) is an effective pitch diameter and \(L_e\) is the engaged thread length. Thus we can calculate the average shear stress demanded of the engaged threads in order to resist the pressure push-out force and compare it to the allowable shear stress for the aluminum threads \(\tau_{\mathrm{allow}}\):</p>
+  \[
+  \tau_{\mathrm{req}}=\frac{F_P}{A_s}. \tag{8}
+  \]
+  \[
+  \mathrm{SF}=\frac{\tau_{\mathrm{allow}}}{\tau_{\mathrm{req}}}. \tag{9}
+  \]
+  <p>The following numerical calculation uses \(P=1000~\mathrm{psia}\). For a concrete safety factor number, an aluminum shear allowable of \(\tau_{\mathrm{allow}}=7.7~\mathrm{ksi}\) is used (a conservative example value on the order of shear yield divided by \(\sim 3\)) for aluminum 6061-T6 alloy.</p>
+
+  <table id="table-3" class="compact">
+    <caption>Table 3: Pressure push-out load (bore-area model) versus thread stripping demand and safety factor at \(P=1000~\mathrm{psia}\) for 1/8 NPT instrumentation fittings.</caption>
+    <thead>
+      <tr><th>Quantity</th><th>1/8–27 NPT</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Pressure, \(P\) (psia)</td><td>1000</td></tr>
+      <tr><td>Engagement length, \(L_e\) (in)</td><td>0.16</td></tr>
+      <tr><td>Threads per inch (TPI)</td><td>27</td></tr>
+      <tr><td>Bore diameter used, \(d_{\mathrm{bore}}\) (in)</td><td>0.3438</td></tr>
+      <tr><td>Projected bore area, \(A_{\mathrm{bore}}\) (in<sup>2</sup>)</td><td>0.0928</td></tr>
+      <tr><td>Push-out force, \(F_P\) (lbf)</td><td>93</td></tr>
+      <tr><td>Estimated strip area, \(A_s\) (in<sup>2</sup>)</td><td>0.106</td></tr>
+      <tr><td>Required shear, \(\tau_{\mathrm{req}}\) (ksi)</td><td>0.88</td></tr>
+      <tr><td>Shear allowable, \(\tau_{\mathrm{allow}}\) (ksi)</td><td>7.7</td></tr>
+      <tr><td>Safety factor, \(\mathrm{SF}\)</td><td>8.8</td></tr>
+    </tbody>
+  </table>
+
+  <p>The safety factor of 8.8 for the 1/8 NPT fittings demonstrates adequate thread engagement to reliably seal and retain the pressure transducers and thermocouple fittings under the operating pressure, despite the smaller diameter and reduced engagement length compared to larger NPT sizes.</p>
+  <p>Before final manufacturing we need to tolerance all surfaces for manufacturing.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="references">
+  <h2>References</h2>
+  <ol>
+    <li id="ref-1">H. Tian <em>et al.</em>, “Application of variable area cavitating venturi as a dynamic flow controller,” <em>Flow Measurement and Instrumentation</em>, vol. 38, pp. 21–26, 2014. <a href="https://www.sciencedirect.com/science/article/abs/pii/S0955598614000582">https://www.sciencedirect.com/science/article/abs/pii/S0955598614000582</a></li>
+    <li id="ref-2">H. T. Gümüşel, “Numerical investigation of cavitating flow in variable area venturi on the basis of experimental data,” M.S. thesis, Dept. of Mechanical Engineering, Middle East Technical University, Ankara, Turkey, 2020. <a href="https://hdl.handle.net/11511/45473">https://hdl.handle.net/11511/45473</a></li>
+  </ol>
+</section>
+
+</body>
+</html>
